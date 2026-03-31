@@ -23,21 +23,30 @@ internal/
 	database/
 		postgres.go
 	handlers/
+		auth_handler.go
 		health_handler.go
 		menu_handler.go
 		table_handler.go
+	middleware/
+		auth_middleware.go
 	models/
+		auth.go
 		common.go
 		menu.go
 		table.go
 	repositories/
+		auth_repository.go
 		menu_repository.go
 		table_repository.go
 	routes/
 		routes.go
 	services/
+		auth_service.go
 		menu_service.go
 		table_service.go
+	utils/
+		jwt.go
+		password.go
 seeds/
 	01_schema.sql
 	02_seed.sql
@@ -45,6 +54,7 @@ docker-compose.yml
 Dockerfile
 go.mod
 README.md
+README_API_TEST.md
 ```
 
 รายละเอียดแต่ละส่วน
@@ -52,21 +62,29 @@ README.md
 - [cmd/main.go](cmd/main.go): จุดเริ่มต้นของแอป โหลดค่า env, สร้างการเชื่อมต่อ DB, ตั้งค่า Fiber middleware และเปิดเซิร์ฟเวอร์
 - [internal/config/env.go](internal/config/env.go): จัดการการอ่านค่าจากไฟล์ .env และอ่านค่าตัวแปรแวดล้อมพร้อม fallback
 - [internal/database/postgres.go](internal/database/postgres.go): สร้าง pgx connection pool และตรวจสอบการเชื่อมต่อ PostgreSQL
+- [internal/handlers/auth_handler.go](internal/handlers/auth_handler.go): endpoint สำหรับ login, me และ logout
 - [internal/handlers/health_handler.go](internal/handlers/health_handler.go): endpoint ตรวจสุขภาพระบบ
 - [internal/handlers/menu_handler.go](internal/handlers/menu_handler.go): endpoint ดึงเมนูสำหรับลูกค้า
 - [internal/handlers/table_handler.go](internal/handlers/table_handler.go): endpoint ดึงรายการโต๊ะ
+- [internal/middleware/auth_middleware.go](internal/middleware/auth_middleware.go): middleware ตรวจสอบ Bearer token
+- [internal/models/auth.go](internal/models/auth.go): โครงสร้างข้อมูลของ auth เช่น login request/response
 - [internal/models/common.go](internal/models/common.go): รูปแบบ response กลางของ API
 - [internal/models/menu.go](internal/models/menu.go): โครงสร้างข้อมูลเมนู
 - [internal/models/table.go](internal/models/table.go): โครงสร้างข้อมูลโต๊ะ
+- [internal/repositories/auth_repository.go](internal/repositories/auth_repository.go): SQL สำหรับค้นหาผู้ใช้เพื่อ login และดึงข้อมูลผู้ใช้จาก token
 - [internal/repositories/menu_repository.go](internal/repositories/menu_repository.go): SQL สำหรับดึงเมนูจากฐานข้อมูล
 - [internal/repositories/table_repository.go](internal/repositories/table_repository.go): SQL สำหรับดึงข้อมูลโต๊ะจากฐานข้อมูล
 - [internal/routes/routes.go](internal/routes/routes.go): รวม route ทั้งระบบ เช่น /health และ /api/v1/*
+- [internal/services/auth_service.go](internal/services/auth_service.go): ชั้นบริการสำหรับตรวจ password, สร้าง JWT และดึงข้อมูลผู้ใช้
 - [internal/services/menu_service.go](internal/services/menu_service.go): ชั้นบริการของเมนู
 - [internal/services/table_service.go](internal/services/table_service.go): ชั้นบริการของโต๊ะ
+- [internal/utils/jwt.go](internal/utils/jwt.go): utility สำหรับสร้างและตรวจสอบ JWT
+- [internal/utils/password.go](internal/utils/password.go): utility สำหรับตรวจ bcrypt hash
 - [seeds/01_schema.sql](seeds/01_schema.sql): สร้างตารางและดัชนีทั้งหมด
 - [seeds/02_seed.sql](seeds/02_seed.sql): ข้อมูลตั้งต้น เช่น role, โต๊ะ, หมวดหมู่เมนู, เมนู
 - [docker-compose.yml](docker-compose.yml): ตั้งค่าบริการ postgres และ api สำหรับรันทั้งระบบด้วย Docker
 - [Dockerfile](Dockerfile): ขั้นตอน build และ run แอป Go ใน container
+- [README_API_TEST.md](README_API_TEST.md): คู่มือทดสอบ API ทีละเส้น
 
 ## สิ่งที่ต้องมีในเครื่อง
 
@@ -82,15 +100,27 @@ APP_NAME=RMS Backend
 APP_PORT=8080
 APP_ENV=development
 
-DB_HOST=postgres
+DB_HOST=localhost
 DB_PORT=5435
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=rms
 DB_SSLMODE=disable
+DB_MAX_CONNS=10
+
+DB_HOST_DOCKER=postgres
+DB_PORT_CONTAINER=5432
+DB_PORT_HOST=5435
+
+JWT_SECRET=super-secret-rms-key
+JWT_EXPIRES_IN_SECONDS=3600
 ```
 
-ถ้ารัน Go แบบ local ให้เปลี่ยน DB_HOST เป็น localhost
+คำอธิบายค่า DB สำคัญ
+
+- DB_HOST + DB_PORT: ใช้ตอนรัน API บนเครื่อง local
+- DB_HOST_DOCKER + DB_PORT_CONTAINER: ใช้ตอนรัน API ใน Docker ให้คุยกับ service postgres ภายใน network
+- DB_PORT_HOST: พอร์ตที่ expose ออกมาจาก container เพื่อให้เครื่อง local เชื่อมเข้า DB
 
 ## วิธีรันโปรเจกต์
 
@@ -129,6 +159,9 @@ go run ./cmd/main.go
 - GET /health
 - GET /api/v1/tables
 - GET /api/v1/customer/menus
+- POST /api/v1/auth/login
+- GET /api/v1/auth/me
+- POST /api/v1/auth/logout
 
 ## ตัวอย่างเช็คระบบ
 
@@ -158,3 +191,5 @@ docker compose up --build
 ```
 
 - CORS ปัจจุบันยังเปิดกว้างสำหรับการพัฒนา ควรจำกัด origin ก่อนนำขึ้น production
+
+- สำหรับวิธีทดสอบ API แบบละเอียด ดูไฟล์ [README_API_TEST.md](README_API_TEST.md)
