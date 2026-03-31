@@ -1,0 +1,37 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build outputs
+bin/
+dist/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test outputs
+*.test
+*.out
+coverage.out
+
+# Logs
+*.log
+logs/
+
+# Go workspace/cache files
+go.work
+go.work.sum
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
