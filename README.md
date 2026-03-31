@@ -83,7 +83,7 @@ APP_PORT=8080
 APP_ENV=development
 
 DB_HOST=postgres
-DB_PORT=5432
+DB_PORT=5435
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=rms
@@ -103,7 +103,7 @@ docker compose up --build
 เมื่อรันแล้ว
 
 - API: http://localhost:8080
-- PostgreSQL: localhost:5432
+- PostgreSQL: localhost:5435
 
 หมายเหตุ: ไฟล์ในโฟลเดอร์ seeds จะถูกรันอัตโนมัติครั้งแรกที่สร้างฐานข้อมูล
 
