@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/suphanatchanlek30/rms-project-backend/internal/handlers"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/middleware"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/repositories"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/services"
 
@@ -20,10 +21,19 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	menuService := services.NewMenuService(menuRepo)
 	menuHandler := handlers.NewMenuHandler(menuService)
 
+	authRepo := repositories.NewAuthRepository(db)
+	authService := services.NewAuthService(authRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
+
+	auth := v1.Group("/auth")
+	auth.Post("/login", authHandler.Login)
+	auth.Get("/me", middleware.Protected(), authHandler.Me)
+	auth.Post("/logout", middleware.Protected(), authHandler.Logout)
 
 	v1.Get("/tables", tableHandler.GetAll)
 	v1.Get("/customer/menus", menuHandler.GetCustomerMenus)
