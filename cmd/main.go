@@ -1,13 +1,66 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/suphanatchanlek30/rms-project-backend/internal/config"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/database"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/routes"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+)
 
 func main() {
-	app := fiber.New()
+	config.LoadEnv()
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+	dbPool, err := database.NewPostgresPool()
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+	defer dbPool.Close()
+
+	app := fiber.New(fiber.Config{
+		AppName:      config.GetEnv("APP_NAME", "RMS Backend"),
+		BodyLimit:    10 * 1024 * 1024,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	})
 
-	app.Listen(":3000")
+	app.Use(recover.New())
+	app.Use(fiberLogger.New())
+	app.Use(cors.New())
+
+	routes.SetupRoutes(app, dbPool)
+
+	go func() {
+		port := config.GetEnv("APP_PORT", "8080")
+		if err := app.Listen(":" + port); err != nil {
+			log.Fatalf("server failed to start: %v", err)
+		}
+	}()
+
+	log.Printf("server is running on port %s", config.GetEnv("APP_PORT", "8080"))
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		log.Printf("graceful shutdown failed: %v", err)
+	}
+
+	log.Println("server stopped")
 }
