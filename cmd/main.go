@@ -20,6 +20,7 @@ import (
 
 func main() {
 	config.LoadEnv()
+	appPort := config.GetEnv("APP_PORT", "8080")
 
 	dbPool, err := database.NewPostgresPool()
 	if err != nil {
@@ -41,13 +42,12 @@ func main() {
 	routes.SetupRoutes(app, dbPool)
 
 	go func() {
-		port := config.GetEnv("APP_PORT", "8080")
-		if err := app.Listen(":" + port); err != nil {
+		if err := app.Listen(":" + appPort); err != nil {
 			log.Fatalf("server failed to start: %v", err)
 		}
 	}()
 
-	log.Printf("server is running on port %s", config.GetEnv("APP_PORT", "8080"))
+	log.Printf("server is running on port %s", appPort)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/config"
@@ -18,7 +17,7 @@ func NewPostgresPool() (*pgxpool.Pool, error) {
 	password := config.GetEnv("DB_PASSWORD", "postgres")
 	dbName := config.GetEnv("DB_NAME", "rms")
 	sslmode := config.GetEnv("DB_SSLMODE", "disable")
-	maxConnsStr := config.GetEnv("DB_MAX_CONNS", "10")
+	maxConns := config.GetEnvInt("DB_MAX_CONNS", 10)
 
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
@@ -30,10 +29,6 @@ func NewPostgresPool() (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	maxConns, err := strconv.ParseInt(maxConnsStr, 10, 32)
-	if err != nil {
-		maxConns = 10
-	}
 	cfg.MaxConns = int32(maxConns)
 	cfg.MinConns = 2
 	cfg.MaxConnIdleTime = 5 * time.Minute

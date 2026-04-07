@@ -116,11 +116,15 @@ JWT_SECRET=super-secret-rms-key
 JWT_EXPIRES_IN_SECONDS=3600
 ```
 
+โปรเจกต์นี้จะโหลดค่าจาก `.env` อัตโนมัติเมื่อรันด้วย Go โดยตรง และใช้ค่าจาก `env_file` ของ Docker Compose เมื่อรันใน container
+
 คำอธิบายค่า DB สำคัญ
 
 - DB_HOST + DB_PORT: ใช้ตอนรัน API บนเครื่อง local
 - DB_HOST_DOCKER + DB_PORT_CONTAINER: ใช้ตอนรัน API ใน Docker ให้คุยกับ service postgres ภายใน network
 - DB_PORT_HOST: พอร์ตที่ expose ออกมาจาก container เพื่อให้เครื่อง local เชื่อมเข้า DB
+- DB_MAX_CONNS: จำนวน connection สูงสุดของ connection pool
+- JWT_SECRET + JWT_EXPIRES_IN_SECONDS: ใช้สำหรับเซ็นและกำหนดอายุ token
 
 ## วิธีรันโปรเจกต์
 
@@ -135,7 +139,7 @@ docker compose up --build
 - API: http://localhost:8080
 - PostgreSQL: localhost:5435
 
-หมายเหตุ: ไฟล์ในโฟลเดอร์ seeds จะถูกรันอัตโนมัติครั้งแรกที่สร้างฐานข้อมูล
+หมายเหตุ: ไฟล์ในโฟลเดอร์ seeds จะถูกรันอัตโนมัติครั้งแรกที่สร้างฐานข้อมูล และ container API จะอ่านค่าจาก `.env` ผ่าน `env_file` โดยไม่ต้อง copy `.env` เข้า image เอง
 
 แบบ Local Go และใช้ DB ใน Docker
 
@@ -145,7 +149,7 @@ docker compose up --build
 docker compose up -d postgres
 ```
 
-2. แก้ไฟล์ .env ให้ DB_HOST=localhost
+2. ตรวจให้แน่ใจว่า `.env` ใช้ค่า local สำหรับ DB อยู่แล้ว เช่น `DB_HOST=localhost` และ `DB_PORT=5435`
 
 3. รันแอป
 
@@ -153,6 +157,8 @@ docker compose up -d postgres
 go mod tidy
 go run ./cmd/main.go
 ```
+
+ถ้าต้องการสลับไปใช้ฐานข้อมูลใน container จากเครื่อง local ให้ใช้ `DB_HOST=localhost` และ `DB_PORT=5435` ตามค่าใน `.env` ได้เลย โดยไม่ต้องแก้โค้ด
 
 ## Endpoint ที่มีตอนนี้
 
@@ -191,5 +197,7 @@ docker compose up --build
 ```
 
 - CORS ปัจจุบันยังเปิดกว้างสำหรับการพัฒนา ควรจำกัด origin ก่อนนำขึ้น production
+
+- ถ้าปรับค่าใน `.env` เช่น port, database connection หรือ JWT secret ให้รีสตาร์ทแอปหรือ compose ใหม่ เพื่อให้ค่าถูกโหลดเข้า runtime
 
 - สำหรับวิธีทดสอบ API แบบละเอียด ดูไฟล์ [README_API_TEST.md](README_API_TEST.md)
