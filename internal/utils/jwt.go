@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
 	"time"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/config"
@@ -20,12 +20,7 @@ type JWTClaims struct {
 
 func GenerateJWT(employeeID, roleID int, roleName, email string) (string, int, error) {
 	secret := config.GetEnv("JWT_SECRET", "super-secret-rms-key")
-	expiresInStr := config.GetEnv("JWT_EXPIRES_IN_SECONDS", "3600")
-
-	expiresIn, err := strconv.Atoi(expiresInStr)
-	if err != nil {
-		expiresIn = 3600
-	}
+	expiresIn := config.GetEnvInt("JWT_EXPIRES_IN_SECONDS", 3600)
 
 	now := time.Now()
 	expireAt := now.Add(time.Duration(expiresIn) * time.Second)
@@ -36,7 +31,7 @@ func GenerateJWT(employeeID, roleID int, roleName, email string) (string, int, e
 		RoleName:   roleName,
 		Email:      email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   strconv.Itoa(employeeID),
+			Subject:   fmt.Sprintf("%d", employeeID),
 			ExpiresAt: jwt.NewNumericDate(expireAt),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
