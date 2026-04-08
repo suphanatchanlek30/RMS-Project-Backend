@@ -31,6 +31,7 @@ internal/
 		auth_middleware.go
 	models/
 		auth.go
+		role_handler.go
 		common.go
 		menu.go
 		table.go
@@ -38,14 +39,17 @@ internal/
 		auth_repository.go
 		menu_repository.go
 		table_repository.go
+		role.go
 	routes/
 		routes.go
 	services/
 		auth_service.go
+		role_repository.go
 		menu_service.go
 		table_service.go
 	utils/
 		jwt.go
+		role_service.go
 		password.go
 seeds/
 	01_schema.sql
@@ -65,18 +69,22 @@ README_API_TEST.md
 - [internal/handlers/auth_handler.go](internal/handlers/auth_handler.go): endpoint สำหรับ login, me และ logout
 - [internal/handlers/health_handler.go](internal/handlers/health_handler.go): endpoint ตรวจสุขภาพระบบ
 - [internal/handlers/menu_handler.go](internal/handlers/menu_handler.go): endpoint ดึงเมนูสำหรับลูกค้า
+- [internal/handlers/role_handler.go](internal/handlers/role_handler.go): endpoint ดึงรายการ role ทั้งหมด (สิทธิ์ ADMIN)
 - [internal/handlers/table_handler.go](internal/handlers/table_handler.go): endpoint ดึงรายการโต๊ะ
 - [internal/middleware/auth_middleware.go](internal/middleware/auth_middleware.go): middleware ตรวจสอบ Bearer token
 - [internal/models/auth.go](internal/models/auth.go): โครงสร้างข้อมูลของ auth เช่น login request/response
 - [internal/models/common.go](internal/models/common.go): รูปแบบ response กลางของ API
 - [internal/models/menu.go](internal/models/menu.go): โครงสร้างข้อมูลเมนู
+- [internal/models/role.go](internal/models/role.go): โครงสร้างข้อมูล role
 - [internal/models/table.go](internal/models/table.go): โครงสร้างข้อมูลโต๊ะ
 - [internal/repositories/auth_repository.go](internal/repositories/auth_repository.go): SQL สำหรับค้นหาผู้ใช้เพื่อ login และดึงข้อมูลผู้ใช้จาก token
 - [internal/repositories/menu_repository.go](internal/repositories/menu_repository.go): SQL สำหรับดึงเมนูจากฐานข้อมูล
+- [internal/repositories/role_repository.go](internal/repositories/role_repository.go): SQL สำหรับดึงข้อมูล role จากฐานข้อมูล
 - [internal/repositories/table_repository.go](internal/repositories/table_repository.go): SQL สำหรับดึงข้อมูลโต๊ะจากฐานข้อมูล
 - [internal/routes/routes.go](internal/routes/routes.go): รวม route ทั้งระบบ เช่น /health และ /api/v1/*
 - [internal/services/auth_service.go](internal/services/auth_service.go): ชั้นบริการสำหรับตรวจ password, สร้าง JWT และดึงข้อมูลผู้ใช้
 - [internal/services/menu_service.go](internal/services/menu_service.go): ชั้นบริการของเมนู
+- [internal/services/role_service.go](internal/services/role_service.go): ชั้นบริการของ role
 - [internal/services/table_service.go](internal/services/table_service.go): ชั้นบริการของโต๊ะ
 - [internal/utils/jwt.go](internal/utils/jwt.go): utility สำหรับสร้างและตรวจสอบ JWT
 - [internal/utils/password.go](internal/utils/password.go): utility สำหรับตรวจ bcrypt hash
@@ -165,6 +173,7 @@ go run ./cmd/main.go
 - GET /health
 - GET /api/v1/tables
 - GET /api/v1/customer/menus
+- GET /api/v1/roles (ต้องมี Bearer token และเป็น ADMIN)
 - POST /api/v1/auth/login
 - GET /api/v1/auth/me
 - POST /api/v1/auth/logout

@@ -67,6 +67,7 @@ $BASE_URL = "http://localhost:8080"
 - GET /health
 - GET /api/v1/tables
 - GET /api/v1/customer/menus
+- GET /api/v1/roles (ต้องมี Bearer token และเป็น ADMIN)
 - POST /api/v1/auth/login
 - GET /api/v1/auth/me (ต้องมี Bearer token)
 - POST /api/v1/auth/logout (ต้องมี Bearer token)
@@ -128,6 +129,46 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 
 คาดหวัง: success = true
 
+### 5.7 Roles (ADMIN เท่านั้น) - กรณีสำเร็จ 200
+
+```bash
+curl http://localhost:8080/api/v1/roles \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+
+คาดหวัง: status 200 และ response รูปแบบใกล้เคียงนี้
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการ role สำเร็จ",
+  "data": [
+    { "roleId": 1, "roleName": "ADMIN" },
+    { "roleId": 2, "roleName": "CASHIER" },
+    { "roleId": 3, "roleName": "CHEF" }
+  ]
+}
+```
+
+### 5.8 Roles - กรณีไม่มี token (401)
+
+```bash
+curl http://localhost:8080/api/v1/roles
+```
+
+คาดหวัง: status 401
+
+### 5.9 Roles - กรณีไม่ใช่ ADMIN (403)
+
+ให้ login ด้วยบัญชี `cashier@rms.com` หรือ `chef@rms.com` แล้วใช้ token ที่ได้
+
+```bash
+curl http://localhost:8080/api/v1/roles \
+  -H "Authorization: Bearer <NON_ADMIN_ACCESS_TOKEN>"
+```
+
+คาดหวัง: status 403
+
 ## 6) วิธีทดสอบใน Postman
 
 1. สร้าง Environment แล้วใส่ตัวแปร `baseUrl = http://localhost:8080`
@@ -171,3 +212,4 @@ go build ./...
 3. คัดลอก accessToken
 4. GET /api/v1/auth/me พร้อม Authorization: Bearer <token>
 5. GET /api/v1/tables และ GET /api/v1/customer/menus
+6. GET /api/v1/roles ด้วย token ของ ADMIN
