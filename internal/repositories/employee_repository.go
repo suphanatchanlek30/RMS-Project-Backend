@@ -273,3 +273,33 @@ func (r *EmployeeRepository) CheckPhoneDuplicate(
 
 	return exists, err
 }
+
+func (r *EmployeeRepository) UpdateEmployeeStatus(
+	ctx context.Context,
+	id int,
+	status bool,
+) (*models.Employee, error) {
+
+	query := `
+	UPDATE employees
+	SET employee_status = $1
+	WHERE employee_id = $2
+	RETURNING employee_id, employee_status
+	`
+
+	var emp models.Employee
+
+	err := r.DB.QueryRow(ctx, query, status, id).Scan(
+		&emp.EmployeeID,
+		&emp.EmployeeStatus,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &emp, nil
+}

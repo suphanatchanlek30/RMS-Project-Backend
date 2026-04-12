@@ -222,3 +222,56 @@ func (h *EmployeeHandler) UpdateEmployee(c *fiber.Ctx) error {
 		Data:    resp,
 	})
 }
+
+func (h *EmployeeHandler) UpdateEmployeeStatus(c *fiber.Ctx) error {
+	idParam := c.Params("employeeId")
+
+	employeeID, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "employeeId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	var req models.UpdateEmployeeStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.UpdateEmployeeStatus(
+		c.UserContext(),
+		employeeID,
+		req.EmployeeStatus,
+	)
+
+	if err != nil {
+		if err.Error() == "NOT_FOUND" {
+			return c.Status(404).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบพนักงาน",
+				Data:    nil,
+			})
+		}
+
+		return c.Status(500).JSON(models.APIResponse{
+			Success: false,
+			Message: "เกิดข้อผิดพลาดในระบบ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(200).JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตสถานะพนักงานสำเร็จ",
+		Data: fiber.Map{
+			"employeeId":     resp.EmployeeID,
+			"employeeStatus": resp.EmployeeStatus,
+		},
+	})
+}

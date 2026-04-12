@@ -75,6 +75,7 @@ $BASE_URL = "http://localhost:8080"
 - GET /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
 - GET /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
 - PATCH /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
+- PATCH /api/v1/employees/employeesid/status (ต้องมี Bearer token และเป็น ADMIN)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -358,6 +359,24 @@ curl curl -X PATCH http://localhost:8080/api/v1/employees/2 \
         "phoneNumber": "0812345678",
         "email": "",
         "hireDate": "",
+        "employeeStatus": false
+    }
+  }
+```
+คาดหวัง: status 200
+
+### 5.18 Employee by ID - เปิด/ปิดการใช้งานพนักงาน (200)
+
+```bash
+curl curl -X PATCH http://localhost:8080/api/v1/employees/2 \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "อัปเดตสถานะพนักงานสำเร็จ",
+    "data": {
+        "employeeId": 11,
         "employeeStatus": false
     }
   }

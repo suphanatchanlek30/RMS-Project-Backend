@@ -101,3 +101,21 @@ func (s *EmployeeService) UpdateEmployee(
 
 	return emp, nil
 }
+
+func (s *EmployeeService) UpdateEmployeeStatus(
+	ctx context.Context,
+	id int,
+	status bool,
+) (*models.Employee, error) {
+
+	emp, err := s.repo.UpdateEmployeeStatus(ctx, id, status)
+	if err != nil {
+		return nil, err
+	}
+
+	if emp == nil {
+		return nil, errors.New("NOT_FOUND")
+	}
+
+	return emp, nil
+}
