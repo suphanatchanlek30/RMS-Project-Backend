@@ -106,3 +106,53 @@ func (h *TableHandler) Create(c *fiber.Ctx) error {
 		Data:    table,
 	})
 }
+
+func (h *TableHandler) Update(c *fiber.Ctx) error {
+	tableId, err := c.ParamsInt("tableId")
+	if err != nil || tableId <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "tableId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	var req models.UpdateTableRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	table, err := h.service.Update(c.UserContext(), tableId, req)
+	if err != nil {
+		if err.Error() == "NOT_FOUND" {
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบโต๊ะ",
+				Data:    nil,
+			})
+		}
+		if err.Error() == "DUPLICATE" {
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "หมายเลขโต๊ะซ้ำ",
+				Data:    nil,
+			})
+		}
+
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "อัปเดตข้อมูลไม่สำเร็จ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตข้อมูลโต๊ะสำเร็จ",
+		Data:    table,
+	})
+}

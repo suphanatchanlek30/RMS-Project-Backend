@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 
@@ -95,4 +97,41 @@ func (r *TableRepository) Create(ctx context.Context, tableNumber string, capaci
 	}
 
 	return &t, nil
+}
+
+func (r *TableRepository) Update(ctx context.Context, tableId int, req models.UpdateTableRequest) (*models.RestaurantTable, error) {
+	query := `
+		UPDATE restaurant_tables
+		SET table_number = $1,
+		    capacity = $2
+		WHERE table_id = $3
+		RETURNING table_id, table_number, capacity, table_status, created_at
+	`
+
+	var table models.RestaurantTable
+	err := r.DB.QueryRow(ctx, query,
+		req.TableNumber,
+		req.Capacity,
+		tableId,
+	).Scan(
+		&table.TableID,
+		&table.TableNumber,
+		&table.Capacity,
+		&table.TableStatus,
+		&table.CreatedAt,
+	)
+
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+
+		if strings.Contains(err.Error(), "duplicate") {
+			return nil, fmt.Errorf("DUPLICATE")
+		}
+
+		return nil, err
+	}
+
+	return &table, nil
 }

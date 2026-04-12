@@ -46,6 +46,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/tables", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetAll)
 	v1.Get("/tables/:tableId", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetByID)
 	v1.Post("/tables", middleware.Protected(), middleware.AdminOnly(), tableHandler.Create)
+	v1.Patch("/tables/:tableId", middleware.Protected(), middleware.AdminOnly(), tableHandler.Update)
 
 	v1.Get("/customer/menus", menuHandler.GetCustomerMenus)
 	v1.Get("/roles", middleware.Protected(), middleware.AdminOnly(), roleHandler.GetAll)
