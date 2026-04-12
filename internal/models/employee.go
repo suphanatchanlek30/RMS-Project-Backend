@@ -19,3 +19,9 @@ type Employee struct {
 	HireDate       string `json:"hireDate"`
 	EmployeeStatus bool   `json:"employeeStatus"`
 }
+
+type UpdateEmployeeRequest struct {
+	EmployeeName string `json:"employeeName"`
+	PhoneNumber  string `json:"phoneNumber"`
+	RoleID       int    `json:"roleId"`
+}

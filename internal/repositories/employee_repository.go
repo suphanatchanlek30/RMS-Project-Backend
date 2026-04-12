@@ -207,3 +207,69 @@ func (r *EmployeeRepository) GetEmployeeByID(
 
 	return &emp, nil
 }
+
+func (r *EmployeeRepository) UpdateEmployee(
+	ctx context.Context,
+	id int,
+	req models.UpdateEmployeeRequest,
+) (*models.Employee, error) {
+
+	query := `
+	UPDATE employees
+	SET employee_name = $1,
+	    phone_number = $2,
+	    role_id = $3
+	WHERE employee_id = $4
+	RETURNING employee_id, employee_name, role_id, phone_number
+	`
+
+	var emp models.Employee
+
+	err := r.DB.QueryRow(ctx, query,
+		req.EmployeeName,
+		req.PhoneNumber,
+		req.RoleID,
+		id,
+	).Scan(
+		&emp.EmployeeID,
+		&emp.EmployeeName,
+		&emp.RoleID,
+		&emp.PhoneNumber,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	err = r.DB.QueryRow(ctx,
+		`SELECT role_name FROM roles WHERE role_id = $1`,
+		emp.RoleID,
+	).Scan(&emp.RoleName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &emp, nil
+}
+
+func (r *EmployeeRepository) CheckPhoneDuplicate(
+	ctx context.Context,
+	id int,
+	phone string,
+) (bool, error) {
+
+	var exists bool
+	err := r.DB.QueryRow(ctx,
+		`SELECT EXISTS (
+			SELECT 1 FROM employees 
+			WHERE phone_number = $1 AND employee_id != $2
+		)`,
+		phone, id,
+	).Scan(&exists)
+
+	return exists, err
+}

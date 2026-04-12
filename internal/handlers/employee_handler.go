@@ -53,6 +53,7 @@ func (h *EmployeeHandler) CreateEmployee(c *fiber.Ctx) error {
 				Message: "role ไม่พบ",
 				Data:    nil,
 			})
+		
 		default:
 			return c.Status(500).JSON(models.APIResponse{
 				Success: false,
@@ -149,5 +150,75 @@ func (h *EmployeeHandler) GetEmployeeByID(c *fiber.Ctx) error {
 		"success": true,
 		"message": "ดึงข้อมูลพนักงานสำเร็จ",
 		"data":    emp,
+	})
+}
+
+func (h *EmployeeHandler) UpdateEmployee(c *fiber.Ctx) error {
+	idParam := c.Params("employeeId")
+
+	employeeID, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "employeeId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	var req models.UpdateEmployeeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.EmployeeName == "" || req.PhoneNumber == "" || req.RoleID == 0 {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ครบ",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.UpdateEmployee(c.UserContext(), employeeID, req)
+	if err != nil {
+		switch err.Error() {
+
+		case "NOT_FOUND":
+			return c.Status(404).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบพนักงาน",
+				Data:    nil,
+			})
+
+		case "ROLE_NOT_FOUND":
+			return c.Status(400).JSON(models.APIResponse{
+				Success: false,
+				Message: "roleId ไม่ถูกต้อง",
+				Data:    nil,
+			})
+
+		case "PHONE_EXISTS":
+			return c.Status(409).JSON(models.APIResponse{
+				Success: false,
+				Message: "เบอร์โทรซ้ำ",
+				Data:    nil,
+			})
+
+		default:
+			return c.Status(500).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(200).JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตข้อมูลพนักงานสำเร็จ",
+		Data:    resp,
 	})
 }
