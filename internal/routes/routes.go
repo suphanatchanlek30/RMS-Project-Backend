@@ -29,6 +29,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	authService := services.NewAuthService(authRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	employeeService := services.NewEmployeeService(employeeRepo)
+	employeeHandler := handlers.NewEmployeeHandler(employeeService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -42,4 +46,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/tables", tableHandler.GetAll)
 	v1.Get("/customer/menus", menuHandler.GetCustomerMenus)
 	v1.Get("/roles", middleware.Protected(), middleware.AdminOnly(), roleHandler.GetAll)
+
+	v1.Post("/employees", middleware.Protected(), middleware.AdminOnly(), employeeHandler.CreateEmployee)
 }

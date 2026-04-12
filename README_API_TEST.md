@@ -169,6 +169,91 @@ curl http://localhost:8080/api/v1/roles \
 
 คาดหวัง: status 403
 
+### 5.10 Employees (ADMIN เท่านั้น) - กรณีสำเร็จ (201)
+
+ให้ login ด้วยบัญชี admin แล้วใช้ token ที่ได้
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 201
+
+```json
+{
+  "success": true,
+  "message": "สร้างพนักงานสำเร็จ",
+  "data": {
+    "employeeId": 15,
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "employeeStatus": true
+  }
+}
+```
+### 5.11 Employees - กรณี email ซ้ำ (409)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 409
+
+### 5.12 Employees - กรณีข้อมูลไม่ครบ (400)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "",
+    "roleId": 2
+  }'
+```
+
+คาดหวัง: status 400
+
+### 5.13 Employees - กรณี role ไม่พบ (404)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "ทดสอบ",
+    "roleId": 999,
+    "phoneNumber": "0812345678",
+    "email": "test999@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 404
+
 ## 6) วิธีทดสอบใน Postman
 
 1. สร้าง Environment แล้วใส่ตัวแปร `baseUrl = http://localhost:8080`
