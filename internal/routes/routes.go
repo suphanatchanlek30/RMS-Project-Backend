@@ -48,4 +48,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/roles", middleware.Protected(), middleware.AdminOnly(), roleHandler.GetAll)
 
 	v1.Post("/employees", middleware.Protected(), middleware.AdminOnly(), employeeHandler.CreateEmployee)
+	v1.Get("/employees", middleware.Protected(), middleware.AdminOnly(), employeeHandler.GetEmployees)
 }

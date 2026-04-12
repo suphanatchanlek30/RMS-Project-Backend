@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/services"
@@ -64,5 +66,55 @@ func (h *EmployeeHandler) CreateEmployee(c *fiber.Ctx) error {
 		Success: true,
 		Message: "สร้างพนักงานสำเร็จ",
 		Data:    resp,
+	})
+}
+
+func (h *EmployeeHandler) GetEmployees(c *fiber.Ctx) error {
+
+	roleIDStr := c.Query("roleId")
+	statusStr := c.Query("status")
+	search := c.Query("search")
+
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
+
+	var roleID *int
+	if roleIDStr != "" {
+		id, _ := strconv.Atoi(roleIDStr)
+		roleID = &id
+	}
+
+	var status *bool
+	if statusStr != "" {
+		val := statusStr == "true"
+		status = &val
+	}
+
+	items, total, err := h.service.GetEmployees(
+		c.UserContext(),
+		roleID,
+		status,
+		search,
+		page,
+		limit,
+	)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "server error",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "ดึงรายการพนักงานสำเร็จ",
+		"data": fiber.Map{
+			"items": items,
+			"pagination": fiber.Map{
+				"page":  page,
+				"limit": limit,
+				"total": total,
+			},
+		},
 	})
 }

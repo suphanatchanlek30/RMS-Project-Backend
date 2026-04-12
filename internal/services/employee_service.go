@@ -33,3 +33,15 @@ func (s *EmployeeService) CreateEmployee(ctx context.Context, req models.CreateE
 
 	return s.repo.CreateEmployee(ctx, req, string(hash))
 }
+
+func (s *EmployeeService) GetEmployees(
+	ctx context.Context,
+	roleID *int,
+	status *bool,
+	search string,
+	page int,
+	limit int,
+) ([]models.Employee, int, error) {
+
+	return s.repo.GetEmployees(ctx, roleID, status, search, page, limit)
+}

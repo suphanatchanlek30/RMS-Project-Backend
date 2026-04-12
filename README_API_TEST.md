@@ -71,6 +71,8 @@ $BASE_URL = "http://localhost:8080"
 - POST /api/v1/auth/login
 - GET /api/v1/auth/me (ต้องมี Bearer token)
 - POST /api/v1/auth/logout (ต้องมี Bearer token)
+- POST /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -250,6 +252,50 @@ curl -X POST http://localhost:8080/api/v1/employees \
     "hireDate": "2025-08-20",
     "password": "12345678"
   }'
+```
+
+คาดหวัง: status 404
+
+### 5.14 Employees - ดูรายชื่อพนักงานทั้งหมด กรณีสำเร็จ (200)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+{
+    "data": {
+        "items": [
+            {
+                "employeeId": 1,
+                "employeeName": "Admin User",
+                "roleId": 1,
+                "roleName": "ADMIN",
+                "phoneNumber": "0811111111",
+                "email": "admin@rms.com",
+                "hireDate": "",
+                "employeeStatus": true
+            },
+            {
+                "employeeId": 2,
+                "employeeName": "Cashier User",
+                "roleId": 2,
+                "roleName": "CASHIER",
+                "phoneNumber": "0822222222",
+                "email": "cashier@rms.com",
+                "hireDate": "",
+                "employeeStatus": true
+            },
+        ],
+        "pagination": {
+            "limit": 20,
+            "page": 1,
+            "total": 6
+        }
+    },
+    "message": "ดึงรายการพนักงานสำเร็จ",
+    "success": true
+}
 ```
 
 คาดหวัง: status 404
