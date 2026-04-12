@@ -22,3 +22,7 @@ func (s *TableService) GetAll(ctx context.Context, status string, page, limit in
 func (s *TableService) GetByID(ctx context.Context, tableID int) (*models.RestaurantTable, error) {
 	return s.repo.GetByID(ctx, tableID)
 }
+
+func (s *TableService) Create(ctx context.Context, tableNumber string, capacity int) (*models.RestaurantTable, error) {
+	return s.repo.Create(ctx, tableNumber, capacity)
+}

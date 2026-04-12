@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
-	"github.com/suphanatchanlek30/rms-project-backend/internal/services"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/services"
 )
 
 type TableHandler struct {
@@ -58,6 +59,50 @@ func (h *TableHandler) GetByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
 		Success: true,
 		Message: "ดึงข้อมูลโต๊ะสำเร็จ",
+		Data:    table,
+	})
+}
+
+func (h *TableHandler) Create(c *fiber.Ctx) error {
+	var req models.CreateTableRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.TableNumber == "" || req.Capacity <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	table, err := h.service.Create(c.UserContext(), req.TableNumber, req.Capacity)
+	if err != nil {
+
+		if strings.Contains(err.Error(), "duplicate key") {
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "หมายเลขโต๊ะซ้ำ",
+				Data:    nil,
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+			Success: false,
+			Message: "สร้างโต๊ะไม่สำเร็จ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(models.APIResponse{
+		Success: true,
+		Message: "สร้างโต๊ะสำเร็จ",
 		Data:    table,
 	})
 }

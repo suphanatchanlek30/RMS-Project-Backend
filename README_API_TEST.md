@@ -77,6 +77,7 @@ $BASE_URL = "http://localhost:8080"
 - PATCH /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
 - PATCH /api/v1/employees/employeesid/status (ต้องมี Bearer token และเป็น ADMIN)
 - GET /api/v1/tables (ต้องมี Bearer token)
+- POST /api/v1/tables (ต้องมี Bearer token และเป็น ADMIN)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -431,9 +432,35 @@ curl -X GET http://localhost:8080/api/v1/tables/1 \
         "tableStatus": "AVAILABLE",
         "createdAt": "2026-04-11T05:33:45.291484Z"
     }
-}
+  }
 ```
 คาดหวัง: status 200
+
+### 5.21 Table  - สร้างโต๊ะใหม่ (201)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tables \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tableNumber": "A07",
+    "capacity": 5
+  }'
+```
+```json
+  {
+    "success": true,
+    "message": "สร้างโต๊ะสำเร็จ",
+    "data": {
+        "tableId": 4,
+        "tableNumber": "A07",
+        "capacity": 5,
+        "tableStatus": "AVAILABLE",
+        "createdAt": "2026-04-12T13:22:57.205103Z"
+    }
+  }
+```
+คาดหวัง: status 201
 
 ## 6) วิธีทดสอบใน Postman
 
