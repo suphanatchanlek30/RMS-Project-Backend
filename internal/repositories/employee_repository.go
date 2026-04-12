@@ -2,7 +2,11 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"strconv"
+	"time"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 )
@@ -156,4 +160,50 @@ func (r *EmployeeRepository) GetEmployees(
 	}
 
 	return items, total, nil
+}
+
+func (r *EmployeeRepository) GetEmployeeByID(
+	ctx context.Context,
+	id int,
+) (*models.Employee, error) {
+
+	query := `
+	SELECT 
+		e.employee_id,
+		e.employee_name,
+		e.role_id,
+		r.role_name,
+		e.phone_number,
+		e.email,
+		e.hire_date,
+		e.employee_status
+	FROM employees e
+	JOIN roles r ON e.role_id = r.role_id
+	WHERE e.employee_id = $1
+	`
+
+	var emp models.Employee
+	var hireDate time.Time
+
+	err := r.DB.QueryRow(ctx, query, id).Scan(
+		&emp.EmployeeID,
+		&emp.EmployeeName,
+		&emp.RoleID,
+		&emp.RoleName,
+		&emp.PhoneNumber,
+		&emp.Email,
+		&hireDate,
+		&emp.EmployeeStatus,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	emp.HireDate = hireDate.Format("2006-01-02")
+
+	return &emp, nil
 }

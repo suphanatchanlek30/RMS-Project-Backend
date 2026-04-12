@@ -73,6 +73,7 @@ $BASE_URL = "http://localhost:8080"
 - POST /api/v1/auth/logout (ต้องมี Bearer token)
 - POST /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
 - GET /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -263,7 +264,7 @@ curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
   -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
 ```
 ```json
-{
+  {
     "data": {
         "items": [
             {
@@ -295,9 +296,47 @@ curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
     },
     "message": "ดึงรายการพนักงานสำเร็จ",
     "success": true
-}
+  }
 ```
 
+คาดหวัง: status 200
+
+### 5.15 Employee by ID - ดูข้อมูลพนักงานรายคน (200)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+      "data": {
+         "employeeId": 1,
+         "employeeName": "Admin User",
+         "roleId": 1,
+         "roleName": "ADMIN",
+          "phoneNumber": "0811111111",
+         "email": "admin@rms.com",
+         "hireDate": "2025-01-01",
+         "employeeStatus": true
+      },
+     "message": "ดึงข้อมูลพนักงานสำเร็จ",
+      "success": true
+  }
+```
+คาดหวัง: status 200
+
+### 5.16 Employee by ID - ดูข้อมูลพนักงานรายคน ไม่พบพนักงาน (404)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+      "message": "ไม่พบพนักงาน",
+      "success": false
+  }
+```
 คาดหวัง: status 404
 
 ## 6) วิธีทดสอบใน Postman

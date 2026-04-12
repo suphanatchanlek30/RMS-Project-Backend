@@ -118,3 +118,36 @@ func (h *EmployeeHandler) GetEmployees(c *fiber.Ctx) error {
 		},
 	})
 }
+
+func (h *EmployeeHandler) GetEmployeeByID(c *fiber.Ctx) error {
+	idParam := c.Params("employeeId")
+
+	employeeID, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"success": false,
+			"message": "employeeId ไม่ถูกต้อง",
+		})
+	}
+
+	emp, err := h.service.GetEmployeeByID(c.UserContext(), employeeID)
+	if err != nil {
+		if err.Error() == "NOT_FOUND" {
+			return c.Status(404).JSON(fiber.Map{
+				"success": false,
+				"message": "ไม่พบพนักงาน",
+			})
+		}
+
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "ดึงข้อมูลพนักงานสำเร็จ",
+		"data":    emp,
+	})
+}

@@ -45,3 +45,16 @@ func (s *EmployeeService) GetEmployees(
 
 	return s.repo.GetEmployees(ctx, roleID, status, search, page, limit)
 }
+
+func (s *EmployeeService) GetEmployeeByID(ctx context.Context, id int) (*models.Employee, error) {
+	emp, err := s.repo.GetEmployeeByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if emp == nil {
+		return nil, errors.New("NOT_FOUND")
+	}
+
+	return emp, nil
+}
