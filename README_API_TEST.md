@@ -414,6 +414,27 @@ curl -X GET "http://localhost:8080/api/v1/tables?status=AVAILABLE&page=1&limit=5
 ```
 คาดหวัง: status 200
 
+### 5.20 Table by ID - ดูข้อมูลโต๊ะรายตัว (200)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tables/1 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "ดึงข้อมูลโต๊ะสำเร็จ",
+    "data": {
+        "tableId": 1,
+        "tableNumber": "A01",
+        "capacity": 4,
+        "tableStatus": "AVAILABLE",
+        "createdAt": "2026-04-11T05:33:45.291484Z"
+    }
+}
+```
+คาดหวัง: status 200
+
 ## 6) วิธีทดสอบใน Postman
 
 1. สร้าง Environment แล้วใส่ตัวแปร `baseUrl = http://localhost:8080`

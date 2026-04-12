@@ -44,6 +44,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	auth.Post("/logout", middleware.Protected(), authHandler.Logout)
 
 	v1.Get("/tables", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetAll)
+	v1.Get("/tables/:tableId", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetByID)
 
 	v1.Get("/customer/menus", menuHandler.GetCustomerMenus)
 	v1.Get("/roles", middleware.Protected(), middleware.AdminOnly(), roleHandler.GetAll)

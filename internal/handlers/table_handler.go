@@ -35,3 +35,29 @@ func (h *TableHandler) GetAll(c *fiber.Ctx) error {
 		Data:    tables,
 	})
 }
+
+func (h *TableHandler) GetByID(c *fiber.Ctx) error {
+	tableID, err := c.ParamsInt("tableId")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "tableId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	table, err := h.service.GetByID(c.UserContext(), tableID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+			Success: false,
+			Message: "ไม่พบโต๊ะ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงข้อมูลโต๊ะสำเร็จ",
+		Data:    table,
+	})
+}
