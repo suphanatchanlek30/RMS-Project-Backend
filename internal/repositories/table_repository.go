@@ -16,14 +16,18 @@ func NewTableRepository(db *pgxpool.Pool) *TableRepository {
 	return &TableRepository{DB: db}
 }
 
-func (r *TableRepository) GetAll(ctx context.Context) ([]models.RestaurantTable, error) {
+func (r *TableRepository) GetAll(ctx context.Context, status string, page, limit int) ([]models.RestaurantTable, error) {
+	offset := (page - 1) * limit
+
 	query := `
 		SELECT table_id, table_number, capacity, table_status, created_at
 		FROM restaurant_tables
+		WHERE ($1 = '' OR table_status = $1)
 		ORDER BY table_number ASC
+		LIMIT $2 OFFSET $3
 	`
 
-	rows, err := r.DB.Query(ctx, query)
+	rows, err := r.DB.Query(ctx, query, status, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +48,5 @@ func (r *TableRepository) GetAll(ctx context.Context) ([]models.RestaurantTable,
 		tables = append(tables, t)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tables, nil
+	return tables, rows.Err()
 }

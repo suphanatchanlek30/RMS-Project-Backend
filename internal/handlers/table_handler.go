@@ -16,18 +16,22 @@ func NewTableHandler(service *services.TableService) *TableHandler {
 }
 
 func (h *TableHandler) GetAll(c *fiber.Ctx) error {
-	tables, err := h.service.GetAll(c.UserContext())
+	status := c.Query("status")
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 10)
+
+	tables, err := h.service.GetAll(c.UserContext(), status, page, limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
 			Success: false,
-			Message: "failed to fetch tables",
-			Data:    err.Error(),
+			Message: "ดึงรายการโต๊ะไม่สำเร็จ",
+			Data:    nil,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
 		Success: true,
-		Message: "fetch tables success",
+		Message: "ดึงรายการโต๊ะสำเร็จ",
 		Data:    tables,
 	})
 }

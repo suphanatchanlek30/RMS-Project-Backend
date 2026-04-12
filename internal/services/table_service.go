@@ -15,6 +15,6 @@ func NewTableService(repo *repositories.TableRepository) *TableService {
 	return &TableService{repo: repo}
 }
 
-func (s *TableService) GetAll(ctx context.Context) ([]models.RestaurantTable, error) {
-	return s.repo.GetAll(ctx)
+func (s *TableService) GetAll(ctx context.Context, status string, page, limit int) ([]models.RestaurantTable, error) {
+	return s.repo.GetAll(ctx, status, page, limit)
 }

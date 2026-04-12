@@ -76,6 +76,7 @@ $BASE_URL = "http://localhost:8080"
 - GET /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
 - PATCH /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
 - PATCH /api/v1/employees/employeesid/status (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/tables (ต้องมี Bearer token)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -379,6 +380,36 @@ curl curl -X PATCH http://localhost:8080/api/v1/employees/2 \
         "employeeId": 11,
         "employeeStatus": false
     }
+  }
+```
+คาดหวัง: status 200
+
+### 5.19 Table - ดูรายการโต๊ะทั้งหมด (200)
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/tables?status=AVAILABLE&page=1&limit=5" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "ดึงรายการโต๊ะสำเร็จ",
+    "data": [
+        {
+            "tableId": 1,
+            "tableNumber": "A01",
+            "capacity": 4,
+            "tableStatus": "AVAILABLE",
+            "createdAt": "2026-04-11T05:33:45.291484Z"
+        },
+        {
+            "tableId": 2,
+            "tableNumber": "A02",
+            "capacity": 2,
+            "tableStatus": "AVAILABLE",
+            "createdAt": "2026-04-11T05:33:45.291484Z"
+        }
+    ]
   }
 ```
 คาดหวัง: status 200
