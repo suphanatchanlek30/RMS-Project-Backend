@@ -1,59 +1,73 @@
 # RMS Project Backend
 
-ระบบ Backend สำหรับ Restaurant Management System (RMS) พัฒนาด้วย Go, Fiber และ PostgreSQL
+โปรเจกต์ Backend ของระบบจัดการร้านอาหาร (Restaurant Management System) พัฒนาด้วย Go + Fiber + PostgreSQL + Docker
 
-## ภาพรวมโปรเจกต์
+## มีอะไรในโปรเจกต์นี้
 
-โปรเจกต์นี้ใช้แนวทางแยกชั้นการทำงานแบบชัดเจน เพื่อให้ขยายระบบได้ง่ายในอนาคต
+- โครงสร้างแยกชั้นชัดเจน: Handler, Service, Repository, Model
+- ระบบยืนยันตัวตนด้วย JWT (Login, Me, Logout)
+- ระบบสิทธิ์การใช้งานตาม Role (ADMIN, CASHIER, CHEF)
+- API จัดการพนักงาน (สร้าง, ค้นหา, แก้ไข, ปิด/เปิดใช้งาน)
+- API จัดการโต๊ะ (ดูรายการ, ดูรายตัว, สร้าง, แก้ไข)
+- API เมนูสำหรับลูกค้า
+- SQL seed สำหรับสร้าง schema และข้อมูลตั้งต้น
+- รองรับการรันแบบ Docker ทั้งระบบ หรือรัน Go local + DB ใน Docker
 
-- Handler: รับคำขอ HTTP และส่งผลลัพธ์กลับ
-- Service: รวมกฎธุรกิจหรือขั้นตอนการทำงาน
-- Repository: ติดต่อฐานข้อมูลโดยตรง
-- Model: โครงสร้างข้อมูลที่ใช้ในระบบ
-- Route: ผูก URL เข้ากับ handler
+## เทคโนโลยีที่ใช้
 
-## โครงสร้างโปรเจกต์ และหน้าที่
+- Go 1.25
+- Fiber v2
+- PostgreSQL 17
+- pgx/v5
+- JWT (golang-jwt)
+- Docker Compose
+
+## โครงสร้างโปรเจกต์
 
 ```text
 cmd/
-	main.go
+  main.go
 internal/
-	config/
-		env.go
-	database/
-		postgres.go
-	handlers/
-		auth_handler.go
-		health_handler.go
-		menu_handler.go
-		table_handler.go
-	middleware/
-		auth_middleware.go
-	models/
-		auth.go
-		role_handler.go
-		common.go
-		menu.go
-		table.go
-	repositories/
-		auth_repository.go
-		menu_repository.go
-		table_repository.go
-		role.go
-	routes/
-		routes.go
-	services/
-		auth_service.go
-		role_repository.go
-		menu_service.go
-		table_service.go
-	utils/
-		jwt.go
-		role_service.go
-		password.go
+  config/
+    env.go
+  database/
+    postgres.go
+  handlers/
+    auth_handler.go
+    employee_handler.go
+    health_handler.go
+    menu_handler.go
+    role_handler.go
+    table_handler.go
+  middleware/
+    auth_middleware.go
+  models/
+    auth.go
+    common.go
+    employee.go
+    menu.go
+    role.go
+    table.go
+  repositories/
+    auth_repository.go
+    employee_repository.go
+    menu_repository.go
+    role_repository.go
+    table_repository.go
+  routes/
+    routes.go
+  services/
+    auth_service.go
+    employee_service.go
+    menu_service.go
+    role_service.go
+    table_service.go
+  utils/
+    jwt.go
+    password.go
 seeds/
-	01_schema.sql
-	02_seed.sql
+  01_schema.sql
+  02_seed.sql
 docker-compose.yml
 Dockerfile
 go.mod
@@ -61,47 +75,22 @@ README.md
 README_API_TEST.md
 ```
 
-รายละเอียดแต่ละส่วน
+## สถาปัตยกรรมโดยย่อ
 
-- [cmd/main.go](cmd/main.go): จุดเริ่มต้นของแอป โหลดค่า env, สร้างการเชื่อมต่อ DB, ตั้งค่า Fiber middleware และเปิดเซิร์ฟเวอร์
-- [internal/config/env.go](internal/config/env.go): จัดการการอ่านค่าจากไฟล์ .env และอ่านค่าตัวแปรแวดล้อมพร้อม fallback
-- [internal/database/postgres.go](internal/database/postgres.go): สร้าง pgx connection pool และตรวจสอบการเชื่อมต่อ PostgreSQL
-- [internal/handlers/auth_handler.go](internal/handlers/auth_handler.go): endpoint สำหรับ login, me และ logout
-- [internal/handlers/health_handler.go](internal/handlers/health_handler.go): endpoint ตรวจสุขภาพระบบ
-- [internal/handlers/menu_handler.go](internal/handlers/menu_handler.go): endpoint ดึงเมนูสำหรับลูกค้า
-- [internal/handlers/role_handler.go](internal/handlers/role_handler.go): endpoint ดึงรายการ role ทั้งหมด (สิทธิ์ ADMIN)
-- [internal/handlers/table_handler.go](internal/handlers/table_handler.go): endpoint ดึงรายการโต๊ะ
-- [internal/middleware/auth_middleware.go](internal/middleware/auth_middleware.go): middleware ตรวจสอบ Bearer token
-- [internal/models/auth.go](internal/models/auth.go): โครงสร้างข้อมูลของ auth เช่น login request/response
-- [internal/models/common.go](internal/models/common.go): รูปแบบ response กลางของ API
-- [internal/models/menu.go](internal/models/menu.go): โครงสร้างข้อมูลเมนู
-- [internal/models/role.go](internal/models/role.go): โครงสร้างข้อมูล role
-- [internal/models/table.go](internal/models/table.go): โครงสร้างข้อมูลโต๊ะ
-- [internal/repositories/auth_repository.go](internal/repositories/auth_repository.go): SQL สำหรับค้นหาผู้ใช้เพื่อ login และดึงข้อมูลผู้ใช้จาก token
-- [internal/repositories/menu_repository.go](internal/repositories/menu_repository.go): SQL สำหรับดึงเมนูจากฐานข้อมูล
-- [internal/repositories/role_repository.go](internal/repositories/role_repository.go): SQL สำหรับดึงข้อมูล role จากฐานข้อมูล
-- [internal/repositories/table_repository.go](internal/repositories/table_repository.go): SQL สำหรับดึงข้อมูลโต๊ะจากฐานข้อมูล
-- [internal/routes/routes.go](internal/routes/routes.go): รวม route ทั้งระบบ เช่น /health และ /api/v1/*
-- [internal/services/auth_service.go](internal/services/auth_service.go): ชั้นบริการสำหรับตรวจ password, สร้าง JWT และดึงข้อมูลผู้ใช้
-- [internal/services/menu_service.go](internal/services/menu_service.go): ชั้นบริการของเมนู
-- [internal/services/role_service.go](internal/services/role_service.go): ชั้นบริการของ role
-- [internal/services/table_service.go](internal/services/table_service.go): ชั้นบริการของโต๊ะ
-- [internal/utils/jwt.go](internal/utils/jwt.go): utility สำหรับสร้างและตรวจสอบ JWT
-- [internal/utils/password.go](internal/utils/password.go): utility สำหรับตรวจ bcrypt hash
-- [seeds/01_schema.sql](seeds/01_schema.sql): สร้างตารางและดัชนีทั้งหมด
-- [seeds/02_seed.sql](seeds/02_seed.sql): ข้อมูลตั้งต้น เช่น role, โต๊ะ, หมวดหมู่เมนู, เมนู
-- [docker-compose.yml](docker-compose.yml): ตั้งค่าบริการ postgres และ api สำหรับรันทั้งระบบด้วย Docker
-- [Dockerfile](Dockerfile): ขั้นตอน build และ run แอป Go ใน container
-- [README_API_TEST.md](README_API_TEST.md): คู่มือทดสอบ API ทีละเส้น
+- `Handler`: รับ HTTP request, validate input, ส่ง response
+- `Service`: รวม business logic
+- `Repository`: คุยกับฐานข้อมูลโดยตรง
+- `Model`: โครงสร้าง request/response/entity
+- `Route`: ผูก endpoint กับ handler และ middleware
 
 ## สิ่งที่ต้องมีในเครื่อง
 
 - Go 1.25 ขึ้นไป
-- Docker Desktop (แนะนำสำหรับเริ่มต้นเร็ว)
+- Docker Desktop
 
-## การตั้งค่า Environment
+## การตั้งค่าไฟล์ .env
 
-ไฟล์ .env ที่ root ของโปรเจกต์
+สร้างไฟล์ `.env` ที่ root โปรเจกต์
 
 ```env
 APP_NAME=RMS Backend
@@ -124,89 +113,112 @@ JWT_SECRET=super-secret-rms-key
 JWT_EXPIRES_IN_SECONDS=3600
 ```
 
-โปรเจกต์นี้จะโหลดค่าจาก `.env` อัตโนมัติเมื่อรันด้วย Go โดยตรง และใช้ค่าจาก `env_file` ของ Docker Compose เมื่อรันใน container
+ความหมายค่า DB ที่ใช้บ่อย
 
-คำอธิบายค่า DB สำคัญ
+- `DB_HOST` + `DB_PORT`: ใช้ตอนรัน API บนเครื่อง local
+- `DB_HOST_DOCKER` + `DB_PORT_CONTAINER`: ใช้ตอนรัน API ใน Docker
+- `DB_PORT_HOST`: พอร์ต DB ที่ expose ออกมาให้ local ต่อเข้าได้
 
-- DB_HOST + DB_PORT: ใช้ตอนรัน API บนเครื่อง local
-- DB_HOST_DOCKER + DB_PORT_CONTAINER: ใช้ตอนรัน API ใน Docker ให้คุยกับ service postgres ภายใน network
-- DB_PORT_HOST: พอร์ตที่ expose ออกมาจาก container เพื่อให้เครื่อง local เชื่อมเข้า DB
-- DB_MAX_CONNS: จำนวน connection สูงสุดของ connection pool
-- JWT_SECRET + JWT_EXPIRES_IN_SECONDS: ใช้สำหรับเซ็นและกำหนดอายุ token
+## วิธีติดตั้งและรัน (Setup)
 
-## วิธีรันโปรเจกต์
-
-แบบ Docker ทั้งระบบ (แนะนำ)
+### 1) รันทั้งระบบด้วย Docker (แนะนำ)
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
-เมื่อรันแล้ว
+ระบบจะพร้อมใช้งานที่
 
-- API: http://localhost:8080
-- PostgreSQL: localhost:5435
+- API: `http://localhost:8080`
+- PostgreSQL: `localhost:5435`
 
-หมายเหตุ: ไฟล์ในโฟลเดอร์ seeds จะถูกรันอัตโนมัติครั้งแรกที่สร้างฐานข้อมูล และ container API จะอ่านค่าจาก `.env` ผ่าน `env_file` โดยไม่ต้อง copy `.env` เข้า image เอง
-
-แบบ Local Go และใช้ DB ใน Docker
-
-1. เปิดเฉพาะฐานข้อมูล
+### 2) รัน Go local + DB ใน Docker
 
 ```bash
 docker compose up -d postgres
-```
-
-2. ตรวจให้แน่ใจว่า `.env` ใช้ค่า local สำหรับ DB อยู่แล้ว เช่น `DB_HOST=localhost` และ `DB_PORT=5435`
-
-3. รันแอป
-
-```bash
 go mod tidy
 go run ./cmd/main.go
 ```
 
-ถ้าต้องการสลับไปใช้ฐานข้อมูลใน container จากเครื่อง local ให้ใช้ `DB_HOST=localhost` และ `DB_PORT=5435` ตามค่าใน `.env` ได้เลย โดยไม่ต้องแก้โค้ด
-
-## Endpoint ที่มีตอนนี้
-
-- GET /health
-- GET /api/v1/tables
-- GET /api/v1/customer/menus
-- GET /api/v1/roles (ต้องมี Bearer token และเป็น ADMIN)
-- POST /api/v1/auth/login
-- GET /api/v1/auth/me
-- POST /api/v1/auth/logout
-
-## ตัวอย่างเช็คระบบ
+## วิธีเช็กว่า API ทำงาน
 
 ```bash
 curl http://localhost:8080/health
 ```
 
-ผลลัพธ์ที่คาดหวัง
+Expected Response:
 
 ```json
 {
-	"success": true,
-	"message": "server is running",
-	"data": {
-		"status": "ok"
-	}
+  "success": true,
+  "message": "server is running",
+  "data": {
+    "status": "ok"
+  }
 }
 ```
 
-## หมายเหตุเพิ่มเติม
+## คำสั่งที่ใช้บ่อย
 
-- ถ้าปรับ schema หรือ seed แล้วต้องการเริ่มใหม่ทั้งหมด ให้ลบ volume เดิมก่อน
+รันและดูสถานะ container:
+
+```bash
+docker compose ps
+docker compose logs -f postgres
+```
+
+เช็กว่าโค้ด build ได้:
+
+```bash
+go build ./...
+```
+
+รีเซ็ตฐานข้อมูลทั้งหมด (ลบ volume เดิม):
 
 ```bash
 docker compose down -v
-docker compose up --build
+docker compose up --build -d
 ```
 
-- CORS ปัจจุบันยังเปิดกว้างสำหรับการพัฒนา ควรจำกัด origin ก่อนนำขึ้น production
+## Endpoint ที่มีในระบบตอนนี้
 
-- ถ้าปรับค่าใน `.env` เช่น port, database connection หรือ JWT secret ให้รีสตาร์ทแอปหรือ compose ใหม่ เพื่อให้ค่าถูกโหลดเข้า runtime
+### Public
 
-- สำหรับวิธีทดสอบ API แบบละเอียด ดูไฟล์ [README_API_TEST.md](README_API_TEST.md)
+- `GET /health`
+- `GET /api/v1/customer/menus`
+- `POST /api/v1/auth/login`
+
+### ต้องมี Bearer Token
+
+- `GET /api/v1/auth/me`
+- `POST /api/v1/auth/logout`
+
+### ADMIN เท่านั้น
+
+- `GET /api/v1/roles`
+- `POST /api/v1/employees`
+- `GET /api/v1/employees`
+- `GET /api/v1/employees/:employeeId`
+- `PATCH /api/v1/employees/:employeeId`
+- `PATCH /api/v1/employees/:employeeId/status`
+- `POST /api/v1/tables`
+- `PATCH /api/v1/tables/:tableId`
+
+### ADMIN หรือ CASHIER
+
+- `GET /api/v1/tables`
+- `GET /api/v1/tables/:tableId`
+
+## บัญชีสำหรับทดสอบ (จาก seed)
+
+- ADMIN: `admin@rms.com`
+- CASHIER: `cashier@rms.com`
+- CHEF: `chef@rms.com`
+
+หมายเหตุ: ต้องตั้ง `password_hash` ให้บัญชี seed ก่อนตามขั้นตอนใน [README_API_TEST.md](README_API_TEST.md)
+
+## คู่มือทดสอบ API แบบละเอียด
+
+ดูที่ไฟล์ [README_API_TEST.md](README_API_TEST.md)
+
+ไฟล์นี้จัดเป็นลำดับทดสอบสำหรับ Postman พร้อมตัวอย่าง Method, URL, Headers, Body และ Expected Response ของทุก endpoint
