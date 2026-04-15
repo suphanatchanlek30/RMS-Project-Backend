@@ -71,6 +71,14 @@ $BASE_URL = "http://localhost:8080"
 - POST /api/v1/auth/login
 - GET /api/v1/auth/me (ต้องมี Bearer token)
 - POST /api/v1/auth/logout (ต้องมี Bearer token)
+- POST /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/employees (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
+- PATCH /api/v1/employees/employeesid (ต้องมี Bearer token และเป็น ADMIN)
+- PATCH /api/v1/employees/employeesid/status (ต้องมี Bearer token และเป็น ADMIN)
+- GET /api/v1/tables (ต้องมี Bearer token)
+- POST /api/v1/tables (ต้องมี Bearer token และเป็น ADMIN)
+- PATCH /api/v1/tables/:tableId (ต้องมี Bearer token และเป็น ADMIN)
 
 ## 5) ทดสอบทีละเส้น
 
@@ -168,6 +176,318 @@ curl http://localhost:8080/api/v1/roles \
 ```
 
 คาดหวัง: status 403
+
+### 5.10 Employees (ADMIN เท่านั้น) - กรณีสำเร็จ (201)
+
+ให้ login ด้วยบัญชี admin แล้วใช้ token ที่ได้
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 201
+
+```json
+{
+  "success": true,
+  "message": "สร้างพนักงานสำเร็จ",
+  "data": {
+    "employeeId": 15,
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "employeeStatus": true
+  }
+}
+```
+### 5.11 Employees - กรณี email ซ้ำ (409)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "สมชาย ใจดี",
+    "roleId": 2,
+    "phoneNumber": "0812345678",
+    "email": "cashier1@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 409
+
+### 5.12 Employees - กรณีข้อมูลไม่ครบ (400)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "",
+    "roleId": 2
+  }'
+```
+
+คาดหวัง: status 400
+
+### 5.13 Employees - กรณี role ไม่พบ (404)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/employees \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeName": "ทดสอบ",
+    "roleId": 999,
+    "phoneNumber": "0812345678",
+    "email": "test999@rms.com",
+    "hireDate": "2025-08-20",
+    "password": "12345678"
+  }'
+```
+
+คาดหวัง: status 404
+
+### 5.14 Employees - ดูรายชื่อพนักงานทั้งหมด กรณีสำเร็จ (200)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+    "data": {
+        "items": [
+            {
+                "employeeId": 1,
+                "employeeName": "Admin User",
+                "roleId": 1,
+                "roleName": "ADMIN",
+                "phoneNumber": "0811111111",
+                "email": "admin@rms.com",
+                "hireDate": "",
+                "employeeStatus": true
+            },
+            {
+                "employeeId": 2,
+                "employeeName": "Cashier User",
+                "roleId": 2,
+                "roleName": "CASHIER",
+                "phoneNumber": "0822222222",
+                "email": "cashier@rms.com",
+                "hireDate": "",
+                "employeeStatus": true
+            },
+        ],
+        "pagination": {
+            "limit": 20,
+            "page": 1,
+            "total": 6
+        }
+    },
+    "message": "ดึงรายการพนักงานสำเร็จ",
+    "success": true
+  }
+```
+
+คาดหวัง: status 200
+
+### 5.15 Employee by ID - ดูข้อมูลพนักงานรายคน (200)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+      "data": {
+         "employeeId": 1,
+         "employeeName": "Admin User",
+         "roleId": 1,
+         "roleName": "ADMIN",
+          "phoneNumber": "0811111111",
+         "email": "admin@rms.com",
+         "hireDate": "2025-01-01",
+         "employeeStatus": true
+      },
+     "message": "ดึงข้อมูลพนักงานสำเร็จ",
+      "success": true
+  }
+```
+คาดหวัง: status 200
+
+### 5.16 Employee by ID - ดูข้อมูลพนักงานรายคน ไม่พบพนักงาน (404)
+
+```bash
+curl "http://localhost:8080/api/v1/employees?page=1&limit=10" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+      "message": "ไม่พบพนักงาน",
+      "success": false
+  }
+```
+คาดหวัง: status 404
+
+### 5.17 Employee by ID - แก้ไขข้อมูลพนักงาน (200)
+
+```bash
+curl curl -X PATCH http://localhost:8080/api/v1/employees/2 \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "อัปเดตข้อมูลพนักงานสำเร็จ",
+    "data": {
+        "employeeId": 2,
+        "employeeName": "สมชาย ใจดี",
+        "roleId": 2,
+        "roleName": "CASHIER",
+        "phoneNumber": "0812345678",
+        "email": "",
+        "hireDate": "",
+        "employeeStatus": false
+    }
+  }
+```
+คาดหวัง: status 200
+
+### 5.18 Employee by ID - เปิด/ปิดการใช้งานพนักงาน (200)
+
+```bash
+curl curl -X PATCH http://localhost:8080/api/v1/employees/2 \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "อัปเดตสถานะพนักงานสำเร็จ",
+    "data": {
+        "employeeId": 11,
+        "employeeStatus": false
+    }
+  }
+```
+คาดหวัง: status 200
+
+### 5.19 Table - ดูรายการโต๊ะทั้งหมด (200)
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/tables?status=AVAILABLE&page=1&limit=5" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "ดึงรายการโต๊ะสำเร็จ",
+    "data": [
+        {
+            "tableId": 1,
+            "tableNumber": "A01",
+            "capacity": 4,
+            "tableStatus": "AVAILABLE",
+            "createdAt": "2026-04-11T05:33:45.291484Z"
+        },
+        {
+            "tableId": 2,
+            "tableNumber": "A02",
+            "capacity": 2,
+            "tableStatus": "AVAILABLE",
+            "createdAt": "2026-04-11T05:33:45.291484Z"
+        }
+    ]
+  }
+```
+คาดหวัง: status 200
+
+### 5.20 Table by ID - ดูข้อมูลโต๊ะรายตัว (200)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/tables/1 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+```json
+  {
+    "success": true,
+    "message": "ดึงข้อมูลโต๊ะสำเร็จ",
+    "data": {
+        "tableId": 1,
+        "tableNumber": "A01",
+        "capacity": 4,
+        "tableStatus": "AVAILABLE",
+        "createdAt": "2026-04-11T05:33:45.291484Z"
+    }
+  }
+```
+คาดหวัง: status 200
+
+### 5.21 Table  - สร้างโต๊ะใหม่ (201)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tables \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tableNumber": "A07",
+    "capacity": 5
+  }'
+```
+```json
+  {
+    "success": true,
+    "message": "สร้างโต๊ะสำเร็จ",
+    "data": {
+        "tableId": 4,
+        "tableNumber": "A07",
+        "capacity": 5,
+        "tableStatus": "AVAILABLE",
+        "createdAt": "2026-04-12T13:22:57.205103Z"
+    }
+  }
+```
+คาดหวัง: status 201
+
+### 5.22 Table by ID  - แก้ไขข้อมูลโต๊ะ (200)
+
+```bash
+curl -X PATCH http://localhost:8080/api/v1/tables/4 \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tableNumber": "A04",
+    "capacity": 8
+  }'
+```
+```json
+  {
+    "success": true,
+    "message": "อัปเดตข้อมูลโต๊ะสำเร็จ",
+    "data": {
+        "tableId": 4,
+        "tableNumber": "A04",
+        "capacity": 8,
+        "tableStatus": "AVAILABLE",
+        "createdAt": "2026-04-12T13:22:57.205103Z"
+    }
+  }
+```
+คาดหวัง: status 200
 
 ## 6) วิธีทดสอบใน Postman
 

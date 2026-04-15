@@ -9,3 +9,13 @@ type RestaurantTable struct {
 	TableStatus string    `json:"tableStatus"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+type CreateTableRequest struct {
+	TableNumber string `json:"tableNumber"`
+	Capacity    int    `json:"capacity"`
+}
+
+type UpdateTableRequest struct {
+	TableNumber string `json:"tableNumber"`
+	Capacity    int    `json:"capacity"`
+}
