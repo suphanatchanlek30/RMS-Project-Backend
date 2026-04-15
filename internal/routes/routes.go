@@ -29,6 +29,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	authService := services.NewAuthService(authRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	employeeService := services.NewEmployeeService(employeeRepo)
+	employeeHandler := handlers.NewEmployeeHandler(employeeService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -39,7 +43,17 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	auth.Get("/me", middleware.Protected(), authHandler.Me)
 	auth.Post("/logout", middleware.Protected(), authHandler.Logout)
 
-	v1.Get("/tables", tableHandler.GetAll)
+	v1.Get("/tables", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetAll)
+	v1.Get("/tables/:tableId", middleware.Protected(), middleware.AdminOrCashier(), tableHandler.GetByID)
+	v1.Post("/tables", middleware.Protected(), middleware.AdminOnly(), tableHandler.Create)
+	v1.Patch("/tables/:tableId", middleware.Protected(), middleware.AdminOnly(), tableHandler.Update)
+
 	v1.Get("/customer/menus", menuHandler.GetCustomerMenus)
 	v1.Get("/roles", middleware.Protected(), middleware.AdminOnly(), roleHandler.GetAll)
+
+	v1.Post("/employees", middleware.Protected(), middleware.AdminOnly(), employeeHandler.CreateEmployee)
+	v1.Get("/employees", middleware.Protected(), middleware.AdminOnly(), employeeHandler.GetEmployees)
+	v1.Get("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.GetEmployeeByID)
+	v1.Patch("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployee)
+	v1.Patch("/employees/:employeeId/status", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployeeStatus)
 }
