@@ -79,4 +79,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/qr/:token", qrSessionHandler.VerifyQR)
 
 	v1.Post("/categories", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Create)
+	v1.Get("/categories", categoryHandler.GetAll)
 }

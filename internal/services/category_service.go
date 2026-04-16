@@ -27,3 +27,12 @@ func (s *CategoryService) Create(ctx context.Context, req models.CreateCategoryR
 
 	return resp, nil
 }
+
+func (s *CategoryService) GetAll(ctx context.Context) ([]models.CategoryListItem, error) {
+	categories, err := s.repo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return categories, nil
+}

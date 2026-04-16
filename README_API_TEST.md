@@ -740,7 +740,30 @@ Expected Response (201):
 }
 ```
 
-### 2️⃣4️⃣ Logout
+### 2️⃣4️⃣ Get All Categories (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers: None  
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงหมวดหมู่สำเร็จ",
+  "data": [
+    {
+      "categoryId": 1,
+      "categoryName": "อาหารจานหลัก",
+      "description": "เมนูอาหารหลักของร้าน"
+    }
+  ]
+}
+```
+
+### 2️⃣5️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1064,6 +1087,7 @@ Expected Response (409):
 - `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/qr/:token`
 - `POST /api/v1/categories`
+- `GET /api/v1/categories`
 
 ## คำสั่งช่วยตรวจสถานะ
 

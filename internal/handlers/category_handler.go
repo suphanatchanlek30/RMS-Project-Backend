@@ -57,3 +57,20 @@ func (h *CategoryHandler) Create(c *fiber.Ctx) error {
 		Data:    resp,
 	})
 }
+
+func (h *CategoryHandler) GetAll(c *fiber.Ctx) error {
+	categories, err := h.service.GetAll(c.UserContext())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+			Success: false,
+			Message: "เกิดข้อผิดพลาดภายในระบบ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงหมวดหมู่สำเร็จ",
+		Data:    categories,
+	})
+}

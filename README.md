@@ -200,6 +200,7 @@ docker compose up --build -d
 - `GET /api/v1/customer/menus`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/qr/:token`
+- `GET /api/v1/categories`
 
 ### ต้องมี Bearer Token
 

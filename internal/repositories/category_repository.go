@@ -40,3 +40,32 @@ func (r *CategoryRepository) Create(ctx context.Context, req models.CreateCatego
 
 	return &resp, nil
 }
+
+func (r *CategoryRepository) GetAll(ctx context.Context) ([]models.CategoryListItem, error) {
+	query := `
+		SELECT category_id, category_name, description
+		FROM menu_categories
+		ORDER BY category_id ASC
+	`
+
+	rows, err := r.DB.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	defer rows.Close()
+
+	var categories []models.CategoryListItem
+	for rows.Next() {
+		var c models.CategoryListItem
+		if err := rows.Scan(&c.CategoryID, &c.CategoryName, &c.Description); err != nil {
+			return nil, fmt.Errorf("INTERNAL")
+		}
+		categories = append(categories, c)
+	}
+
+	if categories == nil {
+		categories = []models.CategoryListItem{}
+	}
+
+	return categories, nil
+}
