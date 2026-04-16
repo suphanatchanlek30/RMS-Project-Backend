@@ -64,4 +64,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Post("/table-sessions/open", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.OpenTable)
 	v1.Get("/table-sessions/:sessionId", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetByID)
 	v1.Get("/tables/:tableId/current-session", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetCurrentByTableID)
+	v1.Patch("/table-sessions/:sessionId/close", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.CloseSession)
 }

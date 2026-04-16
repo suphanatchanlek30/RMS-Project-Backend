@@ -39,3 +39,11 @@ type CurrentSessionResponse struct {
 	SessionStatus string    `json:"sessionStatus"`
 	StartTime     time.Time `json:"startTime"`
 }
+
+type CloseSessionResponse struct {
+	SessionID     int       `json:"sessionId"`
+	SessionStatus string    `json:"sessionStatus"`
+	EndTime       time.Time `json:"endTime"`
+	TableID       int       `json:"tableId"`
+	TableStatus   string    `json:"tableStatus"`
+}

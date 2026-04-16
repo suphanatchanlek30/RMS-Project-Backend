@@ -594,7 +594,33 @@ Expected Response (200):
 }
 ```
 
-### 1️⃣9️⃣ Logout
+### 1️⃣9️⃣ Close Table Session (CASHIER)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1/close`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ปิดโต๊ะสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "sessionStatus": "CLOSED",
+    "endTime": "2025-08-20T14:00:00Z",
+    "tableId": 1,
+    "tableStatus": "AVAILABLE"
+  }
+}
+```
+
+### 2️⃣0️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -740,6 +766,49 @@ Expected Response (404):
 }
 ```
 
+### K) Close Session ไม่พบ session
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/table-sessions/99999/close`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ session"
+}
+```
+
+### L) Close Session ที่ปิดไปแล้ว
+
+ปิด session เดิมซ้ำอีกครั้ง
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดไปแล้ว"
+}
+```
+
+### M) Close Session ที่ยังมีบิลค้างชำระ
+
+เปิดโต๊ะใหม่ สร้าง order ที่สถานะ PENDING แล้วลองปิด
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ยังมีบิลค้างชำระ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -760,6 +829,7 @@ Expected Response (404):
 - `POST /api/v1/table-sessions/open`
 - `GET /api/v1/table-sessions/:sessionId`
 - `GET /api/v1/tables/:tableId/current-session`
+- `PATCH /api/v1/table-sessions/:sessionId/close`
 
 ## คำสั่งช่วยตรวจสถานะ
 

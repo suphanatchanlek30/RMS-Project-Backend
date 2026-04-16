@@ -63,3 +63,29 @@ func (s *TableSessionService) GetCurrentSessionByTableID(ctx context.Context, ta
 
 	return session, nil
 }
+
+func (s *TableSessionService) CloseSession(ctx context.Context, sessionID int) (*models.CloseSessionResponse, error) {
+	session, err := s.repo.GetSessionByID(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	if session.SessionStatus == "CLOSED" {
+		return nil, fmt.Errorf("UNPROCESSABLE")
+	}
+
+	hasPending, err := s.repo.HasPendingOrders(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	if hasPending {
+		return nil, fmt.Errorf("CONFLICT")
+	}
+
+	resp, err := s.repo.CloseSession(ctx, sessionID, session.TableID)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return resp, nil
+}

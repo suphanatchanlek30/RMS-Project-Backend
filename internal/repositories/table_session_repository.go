@@ -144,3 +144,89 @@ func (r *TableSessionRepository) GetCurrentSessionByTableID(ctx context.Context,
 
 	return &s, nil
 }
+
+func (r *TableSessionRepository) GetSessionByID(ctx context.Context, sessionID int) (*models.TableSession, error) {
+	query := `
+		SELECT session_id, table_id, start_time, end_time, session_details, session_status
+		FROM table_sessions
+		WHERE session_id = $1
+	`
+
+	var s models.TableSession
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(
+		&s.SessionID,
+		&s.TableID,
+		&s.StartTime,
+		&s.EndTime,
+		&s.SessionDetails,
+		&s.SessionStatus,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}
+
+func (r *TableSessionRepository) HasPendingOrders(ctx context.Context, sessionID int) (bool, error) {
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM customer_orders
+			WHERE session_id = $1 AND order_status IN ('PENDING', 'PREPARING')
+		)
+	`
+
+	var exists bool
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (r *TableSessionRepository) CloseSession(ctx context.Context, sessionID int, tableID int) (*models.CloseSessionResponse, error) {
+	tx, err := r.DB.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	defer tx.Rollback(ctx)
+
+	updateSessionQuery := `
+		UPDATE table_sessions
+		SET session_status = 'CLOSED', end_time = CURRENT_TIMESTAMP
+		WHERE session_id = $1
+		RETURNING session_id, session_status, end_time
+	`
+
+	var resp models.CloseSessionResponse
+	err = tx.QueryRow(ctx, updateSessionQuery, sessionID).Scan(
+		&resp.SessionID,
+		&resp.SessionStatus,
+		&resp.EndTime,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	updateTableQuery := `
+		UPDATE restaurant_tables
+		SET table_status = 'AVAILABLE'
+		WHERE table_id = $1
+		RETURNING table_id, table_status
+	`
+
+	err = tx.QueryRow(ctx, updateTableQuery, tableID).Scan(
+		&resp.TableID,
+		&resp.TableStatus,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &resp, nil
+}

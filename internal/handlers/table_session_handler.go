@@ -121,3 +121,50 @@ func (h *TableSessionHandler) GetCurrentByTableID(c *fiber.Ctx) error {
 		Data:    session,
 	})
 }
+
+func (h *TableSessionHandler) CloseSession(c *fiber.Ctx) error {
+	sessionID, err := c.ParamsInt("sessionId")
+	if err != nil || sessionID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "sessionId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.CloseSession(c.UserContext(), sessionID)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ session",
+				Data:    nil,
+			})
+		case "CONFLICT":
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "ยังมีบิลค้างชำระ",
+				Data:    nil,
+			})
+		case "UNPROCESSABLE":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ปิดไปแล้ว",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "ปิดโต๊ะไม่สำเร็จ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ปิดโต๊ะสำเร็จ",
+		Data:    resp,
+	})
+}

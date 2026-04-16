@@ -218,6 +218,7 @@ docker compose up --build -d
 ### CASHIER เท่านั้น
 
 - `POST /api/v1/table-sessions/open`
+- `PATCH /api/v1/table-sessions/:sessionId/close`
 
 ## บัญชีสำหรับทดสอบ (จาก seed)
 
