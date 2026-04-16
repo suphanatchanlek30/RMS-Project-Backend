@@ -63,3 +63,50 @@ func (h *QRSessionHandler) CreateQRSession(c *fiber.Ctx) error {
 		Data:    resp,
 	})
 }
+
+func (h *QRSessionHandler) VerifyQR(c *fiber.Ctx) error {
+	token := c.Params("token")
+	if token == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.VerifyQR(c.UserContext(), token)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ QR",
+				Data:    nil,
+			})
+		case "GONE":
+			return c.Status(fiber.StatusGone).JSON(models.APIResponse{
+				Success: false,
+				Message: "QR หมดอายุ",
+				Data:    nil,
+			})
+		case "UNPROCESSABLE":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ปิดแล้ว",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "QR ใช้งานได้",
+		Data:    resp,
+	})
+}

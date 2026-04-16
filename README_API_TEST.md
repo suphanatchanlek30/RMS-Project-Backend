@@ -656,7 +656,33 @@ Expected Response (201):
 }
 ```
 
-### 2️⃣1️⃣ Logout
+### 2️⃣1️⃣ Verify QR Token (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr/{{qrToken}}`  
+Headers: None  
+Body: None
+
+หมายเหตุ: ใช้ค่า `qrToken` ที่ได้จากข้อ 2️⃣0️⃣ (เก็บไว้ใน Postman environment variable `qrToken`)
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "QR ใช้งานได้",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "sessionStatus": "OPEN",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣2️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -884,6 +910,47 @@ Expected Response (409):
 }
 ```
 
+### P) Verify QR token ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr/invalidtoken999`  
+Headers: None
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ QR"
+}
+```
+
+### Q) Verify QR ที่หมดอายุ
+
+รอให้ QR หมดอายุแล้วลองเรียกอีกครั้ง
+
+Expected Response (410):
+
+```json
+{
+  "success": false,
+  "message": "QR หมดอายุ"
+}
+```
+
+### R) Verify QR ที่ session ปิดแล้ว
+
+ปิด session แล้วลองเรียก QR token เดิม
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดแล้ว"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -906,6 +973,7 @@ Expected Response (409):
 - `GET /api/v1/tables/:tableId/current-session`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
+- `GET /api/v1/qr/:token`
 
 ## คำสั่งช่วยตรวจสถานะ
 

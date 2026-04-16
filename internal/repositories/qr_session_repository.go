@@ -65,3 +65,28 @@ func (r *QRSessionRepository) CreateQRSession(ctx context.Context, sessionID int
 
 	return &resp, nil
 }
+
+func (r *QRSessionRepository) GetByToken(ctx context.Context, token string) (*models.VerifyQRResponse, error) {
+	query := `
+		SELECT qs.qr_session_id, qs.session_id, ts.table_id, rt.table_number, ts.session_status, qs.expired_at
+		FROM qr_sessions qs
+		JOIN table_sessions ts ON ts.session_id = qs.session_id
+		JOIN restaurant_tables rt ON rt.table_id = ts.table_id
+		WHERE qs.qr_code_url LIKE '%/q/' || $1
+	`
+
+	var resp models.VerifyQRResponse
+	err := r.DB.QueryRow(ctx, query, token).Scan(
+		&resp.QRSessionID,
+		&resp.SessionID,
+		&resp.TableID,
+		&resp.TableNumber,
+		&resp.SessionStatus,
+		&resp.ExpiredAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}

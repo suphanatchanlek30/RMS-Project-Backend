@@ -14,3 +14,12 @@ type CreateQRSessionResponse struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	ExpiredAt   time.Time `json:"expiredAt"`
 }
+
+type VerifyQRResponse struct {
+	QRSessionID   int       `json:"qrSessionId"`
+	SessionID     int       `json:"sessionId"`
+	TableID       int       `json:"tableId"`
+	TableNumber   string    `json:"tableNumber"`
+	SessionStatus string    `json:"sessionStatus"`
+	ExpiredAt     time.Time `json:"expiredAt"`
+}

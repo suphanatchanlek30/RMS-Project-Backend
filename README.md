@@ -195,6 +195,7 @@ docker compose up --build -d
 - `GET /health`
 - `GET /api/v1/customer/menus`
 - `POST /api/v1/auth/login`
+- `GET /api/v1/qr/:token`
 
 ### ต้องมี Bearer Token
 

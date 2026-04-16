@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/repositories"
@@ -38,6 +39,23 @@ func (s *QRSessionService) CreateQRSession(ctx context.Context, req models.Creat
 	resp, err := s.repo.CreateQRSession(ctx, req.SessionID)
 	if err != nil {
 		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return resp, nil
+}
+
+func (s *QRSessionService) VerifyQR(ctx context.Context, token string) (*models.VerifyQRResponse, error) {
+	resp, err := s.repo.GetByToken(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	if time.Now().After(resp.ExpiredAt) {
+		return nil, fmt.Errorf("GONE")
+	}
+
+	if resp.SessionStatus == "CLOSED" {
+		return nil, fmt.Errorf("UNPROCESSABLE")
 	}
 
 	return resp, nil

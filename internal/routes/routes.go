@@ -71,4 +71,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Patch("/table-sessions/:sessionId/close", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.CloseSession)
 
 	v1.Post("/qr-sessions", middleware.Protected(), middleware.CashierOnly(), qrSessionHandler.CreateQRSession)
+	v1.Get("/qr/:token", qrSessionHandler.VerifyQR)
 }
