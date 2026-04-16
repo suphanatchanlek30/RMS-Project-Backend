@@ -834,7 +834,52 @@ Expected Response (201):
 }
 ```
 
-### 2️⃣7️⃣ Logout
+### 2️⃣7️⃣ Get All Menus (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus?page=1&limit=20`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Query Parameters (ทั้งหมดเป็น optional):
+
+| Parameter    | Description              | Example     |
+| ------------ | ------------------------ | ----------- |
+| `categoryId` | กรองตามหมวดหมู่           | `1`         |
+| `keyword`    | ค้นหาตามชื่อเมนู          | `ข้าวผัด`    |
+| `status`     | กรองตามสถานะ (`true`/`false`) | `true`  |
+| `page`       | หน้าที่ (default: 1)      | `1`         |
+| `limit`      | จำนวนต่อหน้า (default: 20) | `20`        |
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการเมนูสำเร็จ",
+  "data": {
+    "items": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+### 2️⃣8️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1244,6 +1289,7 @@ Expected Response (409):
 - `GET /api/v1/categories`
 - `PATCH /api/v1/categories/:categoryId`
 - `POST /api/v1/menus`
+- `GET /api/v1/menus`
 
 ## คำสั่งช่วยตรวจสถานะ
 

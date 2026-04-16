@@ -20,6 +20,14 @@ func (s *MenuService) GetCustomerMenus(ctx context.Context) ([]models.Menu, erro
 	return s.repo.GetCustomerMenus(ctx)
 }
 
+func (s *MenuService) GetAll(ctx context.Context, categoryID *int, keyword string, status *bool, page, limit int) ([]models.Menu, int, error) {
+	items, total, err := s.repo.GetAll(ctx, categoryID, keyword, status, page, limit)
+	if err != nil {
+		return nil, 0, fmt.Errorf("INTERNAL")
+	}
+	return items, total, nil
+}
+
 func (s *MenuService) Create(ctx context.Context, req models.CreateMenuRequest) (*models.CreateMenuResponse, error) {
 	resp, err := s.repo.Create(ctx, req)
 	if err != nil {

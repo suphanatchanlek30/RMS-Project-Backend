@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
@@ -64,6 +65,102 @@ func (r *MenuRepository) GetCustomerMenus(ctx context.Context) ([]models.Menu, e
 	}
 
 	return menus, nil
+}
+
+func (r *MenuRepository) GetAll(ctx context.Context, categoryID *int, keyword string, status *bool, page, limit int) ([]models.Menu, int, error) {
+	query := `
+		SELECT
+			m.menu_id,
+			m.menu_name,
+			m.category_id,
+			c.category_name,
+			m.price,
+			COALESCE(m.description, '') AS description,
+			m.menu_status,
+			m.created_at
+		FROM menus m
+		JOIN menu_categories c ON m.category_id = c.category_id
+		WHERE 1=1
+	`
+
+	countQuery := `
+		SELECT COUNT(*)
+		FROM menus m
+		JOIN menu_categories c ON m.category_id = c.category_id
+		WHERE 1=1
+	`
+
+	args := []interface{}{}
+	i := 1
+
+	if categoryID != nil {
+		filter := " AND m.category_id = $" + strconv.Itoa(i)
+		query += filter
+		countQuery += filter
+		args = append(args, *categoryID)
+		i++
+	}
+
+	if keyword != "" {
+		filter := " AND m.menu_name ILIKE $" + strconv.Itoa(i)
+		query += filter
+		countQuery += filter
+		args = append(args, "%"+keyword+"%")
+		i++
+	}
+
+	if status != nil {
+		filter := " AND m.menu_status = $" + strconv.Itoa(i)
+		query += filter
+		countQuery += filter
+		args = append(args, *status)
+		i++
+	}
+
+	// count total
+	var total int
+	err := r.DB.QueryRow(ctx, countQuery, args...).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	query += " ORDER BY m.menu_id ASC"
+	query += " LIMIT $" + strconv.Itoa(i)
+	args = append(args, limit)
+	i++
+	query += " OFFSET $" + strconv.Itoa(i)
+	args = append(args, offset)
+
+	rows, err := r.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var menus []models.Menu
+	for rows.Next() {
+		var m models.Menu
+		if err := rows.Scan(
+			&m.MenuID,
+			&m.MenuName,
+			&m.CategoryID,
+			&m.CategoryName,
+			&m.Price,
+			&m.Description,
+			&m.MenuStatus,
+			&m.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		menus = append(menus, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return menus, total, nil
 }
 
 func (r *MenuRepository) Create(ctx context.Context, req models.CreateMenuRequest) (*models.CreateMenuResponse, error) {

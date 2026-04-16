@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/services"
 
@@ -29,6 +31,48 @@ func (h *MenuHandler) GetCustomerMenus(c *fiber.Ctx) error {
 		Success: true,
 		Message: "fetch customer menus success",
 		Data:    menus,
+	})
+}
+
+func (h *MenuHandler) GetAll(c *fiber.Ctx) error {
+	categoryIDStr := c.Query("categoryId")
+	keyword := c.Query("keyword")
+	statusStr := c.Query("status")
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
+
+	var categoryID *int
+	if categoryIDStr != "" {
+		id, _ := strconv.Atoi(categoryIDStr)
+		categoryID = &id
+	}
+
+	var status *bool
+	if statusStr != "" {
+		val := statusStr == "true"
+		status = &val
+	}
+
+	items, total, err := h.service.GetAll(c.UserContext(), categoryID, keyword, status, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+			Success: false,
+			Message: "เกิดข้อผิดพลาดภายในระบบ",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงรายการเมนูสำเร็จ",
+		Data: fiber.Map{
+			"items": items,
+			"pagination": fiber.Map{
+				"page":  page,
+				"limit": limit,
+				"total": total,
+			},
+		},
 	})
 }
 
