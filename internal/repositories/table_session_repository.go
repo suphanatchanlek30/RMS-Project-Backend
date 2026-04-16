@@ -97,3 +97,27 @@ func (r *TableSessionRepository) OpenSession(ctx context.Context, tableID int) (
 
 	return &resp, nil
 }
+
+func (r *TableSessionRepository) GetByID(ctx context.Context, sessionID int) (*models.TableSessionDetail, error) {
+	query := `
+		SELECT ts.session_id, ts.table_id, rt.table_number, ts.start_time, ts.end_time, ts.session_status
+		FROM table_sessions ts
+		JOIN restaurant_tables rt ON ts.table_id = rt.table_id
+		WHERE ts.session_id = $1
+	`
+
+	var s models.TableSessionDetail
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(
+		&s.SessionID,
+		&s.TableID,
+		&s.TableNumber,
+		&s.StartTime,
+		&s.EndTime,
+		&s.SessionStatus,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}

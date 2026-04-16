@@ -69,3 +69,29 @@ func (h *TableSessionHandler) OpenTable(c *fiber.Ctx) error {
 		Data:    resp,
 	})
 }
+
+func (h *TableSessionHandler) GetByID(c *fiber.Ctx) error {
+	sessionID, err := c.ParamsInt("sessionId")
+	if err != nil || sessionID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "sessionId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	session, err := h.service.GetByID(c.UserContext(), sessionID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+			Success: false,
+			Message: "ไม่พบ session",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงข้อมูล session สำเร็จ",
+		Data:    session,
+	})
+}

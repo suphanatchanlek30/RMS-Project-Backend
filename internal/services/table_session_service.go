@@ -45,3 +45,12 @@ func (s *TableSessionService) OpenTable(ctx context.Context, req models.OpenTabl
 
 	return resp, nil
 }
+
+func (s *TableSessionService) GetByID(ctx context.Context, sessionID int) (*models.TableSessionDetail, error) {
+	session, err := s.repo.GetByID(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	return session, nil
+}

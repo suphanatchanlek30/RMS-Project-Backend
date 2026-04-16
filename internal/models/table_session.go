@@ -23,3 +23,12 @@ type OpenTableResponse struct {
 	StartTime     time.Time `json:"startTime"`
 	SessionStatus string    `json:"sessionStatus"`
 }
+
+type TableSessionDetail struct {
+	SessionID     int        `json:"sessionId"`
+	TableID       int        `json:"tableId"`
+	TableNumber   string     `json:"tableNumber"`
+	StartTime     time.Time  `json:"startTime"`
+	EndTime       *time.Time `json:"endTime"`
+	SessionStatus string     `json:"sessionStatus"`
+}
