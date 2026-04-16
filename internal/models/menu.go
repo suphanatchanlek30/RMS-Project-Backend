@@ -39,3 +39,16 @@ type MenuDetail struct {
 	Description *string `json:"description"`
 	MenuStatus  bool    `json:"menuStatus"`
 }
+
+type UpdateMenuRequest struct {
+	MenuName    string  `json:"menuName"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+}
+
+type UpdateMenuResponse struct {
+	MenuID      int     `json:"menuId"`
+	MenuName    string  `json:"menuName"`
+	Price       float64 `json:"price"`
+	Description *string `json:"description"`
+}

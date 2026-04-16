@@ -220,6 +220,7 @@ docker compose up --build -d
 - `POST /api/v1/categories`
 - `PATCH /api/v1/categories/:categoryId`
 - `POST /api/v1/menus`
+- `PATCH /api/v1/menus/:menuId`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`

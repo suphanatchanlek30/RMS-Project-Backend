@@ -56,3 +56,18 @@ func (s *MenuService) Create(ctx context.Context, req models.CreateMenuRequest) 
 
 	return resp, nil
 }
+
+func (s *MenuService) Update(ctx context.Context, menuID int, req models.UpdateMenuRequest) (*models.UpdateMenuResponse, error) {
+	resp, err := s.repo.Update(ctx, menuID, req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return nil, fmt.Errorf("NOT_FOUND")
+		case "CONFLICT":
+			return nil, fmt.Errorf("CONFLICT")
+		default:
+			return nil, fmt.Errorf("INTERNAL")
+		}
+	}
+	return resp, nil
+}

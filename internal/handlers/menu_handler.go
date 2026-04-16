@@ -158,3 +158,61 @@ func (h *MenuHandler) Create(c *fiber.Ctx) error {
 		Data:    resp,
 	})
 }
+
+func (h *MenuHandler) Update(c *fiber.Ctx) error {
+	menuID, err := strconv.Atoi(c.Params("menuId"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	var req models.UpdateMenuRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.MenuName == "" || req.Price < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.Update(c.UserContext(), menuID, req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบเมนู",
+				Data:    nil,
+			})
+		case "CONFLICT":
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "ชื่อเมนูซ้ำ",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตเมนูสำเร็จ",
+		Data:    resp,
+	})
+}

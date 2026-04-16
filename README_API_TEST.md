@@ -904,7 +904,41 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣9️⃣ Logout
+### 2️⃣9️⃣ Update Menu (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้งพิเศษ",
+  "price": 99.00,
+  "description": "เพิ่มกุ้ง"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้งพิเศษ",
+    "price": 99.00,
+    "description": "เพิ่มกุ้ง"
+  }
+}
+```
+
+### 3️⃣0️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1303,6 +1337,47 @@ Expected Response (404):
 }
 ```
 
+### Z) Update Menu ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "price": 50.00,
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### AA) Update Menu ชื่อซ้ำ
+
+แก้ไขชื่อเมนูเป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1333,6 +1408,7 @@ Expected Response (404):
 - `POST /api/v1/menus`
 - `GET /api/v1/menus`
 - `GET /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId`
 
 ## คำสั่งช่วยตรวจสถานะ
 

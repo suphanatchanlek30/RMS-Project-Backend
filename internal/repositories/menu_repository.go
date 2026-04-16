@@ -218,3 +218,31 @@ func (r *MenuRepository) Create(ctx context.Context, req models.CreateMenuReques
 
 	return &resp, nil
 }
+
+func (r *MenuRepository) Update(ctx context.Context, menuID int, req models.UpdateMenuRequest) (*models.UpdateMenuResponse, error) {
+	query := `
+		UPDATE menus
+		SET menu_name = $1, price = $2, description = $3
+		WHERE menu_id = $4
+		RETURNING menu_id, menu_name, price, description
+	`
+
+	var resp models.UpdateMenuResponse
+	err := r.DB.QueryRow(ctx, query, req.MenuName, req.Price, req.Description, menuID).Scan(
+		&resp.MenuID,
+		&resp.MenuName,
+		&resp.Price,
+		&resp.Description,
+	)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			return nil, fmt.Errorf("CONFLICT")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &resp, nil
+}
