@@ -33,6 +33,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	employeeService := services.NewEmployeeService(employeeRepo)
 	employeeHandler := handlers.NewEmployeeHandler(employeeService)
 
+	tableSessionRepo := repositories.NewTableSessionRepository(db)
+	tableSessionService := services.NewTableSessionService(tableSessionRepo)
+	tableSessionHandler := handlers.NewTableSessionHandler(tableSessionService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -56,4 +60,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.GetEmployeeByID)
 	v1.Patch("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployee)
 	v1.Patch("/employees/:employeeId/status", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployeeStatus)
+
+	v1.Post("/table-sessions/open", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.OpenTable)
 }

@@ -471,7 +471,77 @@ Expected Response (200):
 }
 ```
 
-### 1️⃣5️⃣ Logout
+### 1️⃣5️⃣ Login (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/auth/login`  
+Headers:
+
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "email": "{{cashierEmail}}",
+  "password": "{{cashierPassword}}"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "เข้าสู่ระบบสำเร็จ",
+  "data": {
+    "employeeId": 2,
+    "employeeName": "Cashier User",
+    "roleId": 2,
+    "roleName": "CASHIER",
+    "accessToken": "<JWT_TOKEN>",
+    "tokenType": "Bearer"
+  }
+}
+```
+
+สำคัญ: คัดลอก `data.accessToken` ไปเก็บใน `cashierToken`
+
+### 1️⃣6️⃣ Open Table Session (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 1,
+  "employeeId": 2
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "เปิดโต๊ะสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "startTime": "2025-08-20T12:00:00Z",
+    "sessionStatus": "OPEN"
+  }
+}
+```
+
+### 1️⃣7️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -537,6 +607,52 @@ Expected: `409`
 
 Expected: `404`
 
+### F) Open Table Session ไม่พบโต๊ะ
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 99999,
+  "employeeId": 2
+}
+```
+
+Expected: `404`
+
+### G) Open Table Session โต๊ะกำลังใช้งานอยู่
+
+เปิดโต๊ะเดิมที่เปิดไปแล้วซ้ำอีกครั้ง
+
+Expected: `409`
+
+### H) Open Table Session ใช้ token ADMIN
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 2,
+  "employeeId": 1
+}
+```
+
+Expected: `403`
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -554,6 +670,7 @@ Expected: `404`
 - `GET /api/v1/tables/:tableId`
 - `POST /api/v1/tables`
 - `PATCH /api/v1/tables/:tableId`
+- `POST /api/v1/table-sessions/open`
 
 ## คำสั่งช่วยตรวจสถานะ
 
