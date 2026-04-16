@@ -40,6 +40,7 @@ internal/
     role_handler.go
     table_handler.go
     table_session_handler.go
+    qr_session_handler.go
   middleware/
     auth_middleware.go
   models/
@@ -50,6 +51,7 @@ internal/
     role.go
     table.go
     table_session.go
+    qr_session.go
   repositories/
     auth_repository.go
     employee_repository.go
@@ -57,6 +59,7 @@ internal/
     role_repository.go
     table_repository.go
     table_session_repository.go
+    qr_session_repository.go
   routes/
     routes.go
   services/
@@ -66,6 +69,7 @@ internal/
     role_service.go
     table_service.go
     table_session_service.go
+    qr_session_service.go
   utils/
     jwt.go
     password.go
@@ -219,6 +223,7 @@ docker compose up --build -d
 
 - `POST /api/v1/table-sessions/open`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
+- `POST /api/v1/qr-sessions`
 
 ## บัญชีสำหรับทดสอบ (จาก seed)
 

@@ -620,7 +620,43 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣0️⃣ Logout
+### 2️⃣0️⃣ Create QR Session (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/qr-sessions`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1
+}
+```
+
+หมายเหตุ: ต้องเปิดโต๊ะใหม่ก่อน (ถ้า session 1 ถูกปิดไปแล้วจากข้อ 1️⃣9️⃣) โดยใช้ข้อ 1️⃣6️⃣ แล้วใส่ sessionId ใหม่ที่ได้
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้าง QR Session สำเร็จ",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "qrCodeUrl": "http://localhost:3000/q/abcxyz123",
+    "qrToken": "abcxyz123",
+    "createdAt": "2025-08-20T12:00:00Z",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣1️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -809,6 +845,45 @@ Expected Response (409):
 }
 ```
 
+### N) Create QR Session ไม่พบ session
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/qr-sessions`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 99999
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ session"
+}
+```
+
+### O) Create QR Session ซ้ำ (มี QR active อยู่แล้ว)
+
+สร้าง QR Session ด้วย sessionId เดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "มี QR active อยู่แล้ว"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -830,6 +905,7 @@ Expected Response (409):
 - `GET /api/v1/table-sessions/:sessionId`
 - `GET /api/v1/tables/:tableId/current-session`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
+- `POST /api/v1/qr-sessions`
 
 ## คำสั่งช่วยตรวจสถานะ
 

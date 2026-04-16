@@ -37,6 +37,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	tableSessionService := services.NewTableSessionService(tableSessionRepo)
 	tableSessionHandler := handlers.NewTableSessionHandler(tableSessionService)
 
+	qrSessionRepo := repositories.NewQRSessionRepository(db)
+	qrSessionService := services.NewQRSessionService(qrSessionRepo, tableSessionRepo)
+	qrSessionHandler := handlers.NewQRSessionHandler(qrSessionService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -65,4 +69,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/table-sessions/:sessionId", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetByID)
 	v1.Get("/tables/:tableId/current-session", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetCurrentByTableID)
 	v1.Patch("/table-sessions/:sessionId/close", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.CloseSession)
+
+	v1.Post("/qr-sessions", middleware.Protected(), middleware.CashierOnly(), qrSessionHandler.CreateQRSession)
 }
