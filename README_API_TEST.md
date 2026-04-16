@@ -707,7 +707,40 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣3️⃣ Logout
+### 2️⃣3️⃣ Create Category (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่ม",
+  "description": "เมนูเครื่องดื่ม"
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่ม",
+    "description": "เมนูเครื่องดื่ม",
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣4️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -993,6 +1026,19 @@ Expected Response (404):
 }
 ```
 
+### T) Create Category ชื่อซ้ำ
+
+สร้างหมวดหมู่ด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1017,6 +1063,7 @@ Expected Response (404):
 - `POST /api/v1/qr-sessions`
 - `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/qr/:token`
+- `POST /api/v1/categories`
 
 ## คำสั่งช่วยตรวจสถานะ
 
