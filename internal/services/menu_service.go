@@ -71,3 +71,16 @@ func (s *MenuService) Update(ctx context.Context, menuID int, req models.UpdateM
 	}
 	return resp, nil
 }
+
+func (s *MenuService) UpdateStatus(ctx context.Context, menuID int, status bool) (*models.UpdateMenuStatusResponse, error) {
+	resp, err := s.repo.UpdateStatus(ctx, menuID, status)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return nil, fmt.Errorf("NOT_FOUND")
+		default:
+			return nil, fmt.Errorf("INTERNAL")
+		}
+	}
+	return resp, nil
+}

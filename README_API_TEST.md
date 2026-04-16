@@ -938,7 +938,37 @@ Expected Response (200):
 }
 ```
 
-### 3️⃣0️⃣ Logout
+### 3️⃣0️⃣ Update Menu Status (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตสถานะเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuStatus": false
+  }
+}
+```
+
+### 3️⃣1️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1378,6 +1408,32 @@ Expected Response (409):
 }
 ```
 
+### AB) Update Menu Status ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1409,6 +1465,7 @@ Expected Response (409):
 - `GET /api/v1/menus`
 - `GET /api/v1/menus/:menuId`
 - `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 ## คำสั่งช่วยตรวจสถานะ
 

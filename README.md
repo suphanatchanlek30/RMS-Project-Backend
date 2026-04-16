@@ -221,6 +221,7 @@ docker compose up --build -d
 - `PATCH /api/v1/categories/:categoryId`
 - `POST /api/v1/menus`
 - `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`

@@ -52,3 +52,12 @@ type UpdateMenuResponse struct {
 	Price       float64 `json:"price"`
 	Description *string `json:"description"`
 }
+
+type UpdateMenuStatusRequest struct {
+	MenuStatus *bool `json:"menuStatus"`
+}
+
+type UpdateMenuStatusResponse struct {
+	MenuID     int  `json:"menuId"`
+	MenuStatus bool `json:"menuStatus"`
+}

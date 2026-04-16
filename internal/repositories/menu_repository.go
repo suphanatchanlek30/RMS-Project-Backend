@@ -246,3 +246,26 @@ func (r *MenuRepository) Update(ctx context.Context, menuID int, req models.Upda
 
 	return &resp, nil
 }
+
+func (r *MenuRepository) UpdateStatus(ctx context.Context, menuID int, status bool) (*models.UpdateMenuStatusResponse, error) {
+	query := `
+		UPDATE menus
+		SET menu_status = $1
+		WHERE menu_id = $2
+		RETURNING menu_id, menu_status
+	`
+
+	var resp models.UpdateMenuStatusResponse
+	err := r.DB.QueryRow(ctx, query, status, menuID).Scan(
+		&resp.MenuID,
+		&resp.MenuStatus,
+	)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &resp, nil
+}
