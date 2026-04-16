@@ -54,3 +54,12 @@ func (s *TableSessionService) GetByID(ctx context.Context, sessionID int) (*mode
 
 	return session, nil
 }
+
+func (s *TableSessionService) GetCurrentSessionByTableID(ctx context.Context, tableID int) (*models.CurrentSessionResponse, error) {
+	session, err := s.repo.GetCurrentSessionByTableID(ctx, tableID)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	return session, nil
+}

@@ -541,7 +541,6 @@ Expected Response (201):
 }
 ```
 
-สำคัญ: จด `data.sessionId` ที่ได้ เช่น `1` เพื่อใช้ในข้อถัดไป
 
 ### 1️⃣7️⃣ Get Table Session By ID (ADMIN หรือ CASHIER)
 
@@ -570,7 +569,32 @@ Expected Response (200):
 }
 ```
 
-### 1️⃣8️⃣ Logout
+### 1️⃣8️⃣ Get Current Session By Table ID (ADMIN หรือ CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/tables/1/current-session`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึง session ปัจจุบันสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "sessionStatus": "OPEN",
+    "startTime": "2025-08-20T12:00:00Z"
+  }
+}
+```
+
+### 1️⃣9️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -699,6 +723,23 @@ Expected Response (404):
 }
 ```
 
+### J) Get Current Session โต๊ะไม่มี session เปิดอยู่
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/tables/3/current-session`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่มี session ที่เปิดอยู่"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -718,6 +759,7 @@ Expected Response (404):
 - `PATCH /api/v1/tables/:tableId`
 - `POST /api/v1/table-sessions/open`
 - `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/tables/:tableId/current-session`
 
 ## คำสั่งช่วยตรวจสถานะ
 

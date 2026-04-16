@@ -121,3 +121,26 @@ func (r *TableSessionRepository) GetByID(ctx context.Context, sessionID int) (*m
 
 	return &s, nil
 }
+
+func (r *TableSessionRepository) GetCurrentSessionByTableID(ctx context.Context, tableID int) (*models.CurrentSessionResponse, error) {
+	query := `
+		SELECT session_id, table_id, session_status, start_time
+		FROM table_sessions
+		WHERE table_id = $1 AND session_status = 'OPEN'
+		ORDER BY start_time DESC
+		LIMIT 1
+	`
+
+	var s models.CurrentSessionResponse
+	err := r.DB.QueryRow(ctx, query, tableID).Scan(
+		&s.SessionID,
+		&s.TableID,
+		&s.SessionStatus,
+		&s.StartTime,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}

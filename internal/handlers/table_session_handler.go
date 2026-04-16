@@ -95,3 +95,29 @@ func (h *TableSessionHandler) GetByID(c *fiber.Ctx) error {
 		Data:    session,
 	})
 }
+
+func (h *TableSessionHandler) GetCurrentByTableID(c *fiber.Ctx) error {
+	tableID, err := c.ParamsInt("tableId")
+	if err != nil || tableID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "tableId ไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	session, err := h.service.GetCurrentSessionByTableID(c.UserContext(), tableID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+			Success: false,
+			Message: "ไม่มี session ที่เปิดอยู่",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึง session ปัจจุบันสำเร็จ",
+		Data:    session,
+	})
+}
