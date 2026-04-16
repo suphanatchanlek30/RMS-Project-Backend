@@ -17,10 +17,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	tableService := services.NewTableService(tableRepo)
 	tableHandler := handlers.NewTableHandler(tableService)
 
-	menuRepo := repositories.NewMenuRepository(db)
-	menuService := services.NewMenuService(menuRepo)
-	menuHandler := handlers.NewMenuHandler(menuService)
-
 	roleRepo := repositories.NewRoleRepository(db)
 	roleService := services.NewRoleService(roleRepo)
 	roleHandler := handlers.NewRoleHandler(roleService)
@@ -40,6 +36,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	qrSessionRepo := repositories.NewQRSessionRepository(db)
 	qrSessionService := services.NewQRSessionService(qrSessionRepo, tableSessionRepo)
 	qrSessionHandler := handlers.NewQRSessionHandler(qrSessionService)
+
+	menuRepo := repositories.NewMenuRepository(db)
+	menuService := services.NewMenuService(menuRepo, qrSessionRepo)
+	menuHandler := handlers.NewMenuHandler(menuService)
 
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)

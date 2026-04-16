@@ -164,22 +164,39 @@ Expected Response (200):
 ### 5️⃣ Customer Menus (Public)
 
 Method: `GET`  
-URL: `{{baseUrl}}/api/v1/customer/menus`  
+URL: `{{baseUrl}}/api/v1/customer/menus?qrToken={{qrToken}}`  
 Headers: None  
 Body: None
+
+> ใช้ `qrToken` ที่ได้จากการสร้าง QR Session (หรือจาก Verify QR)
 
 Expected Response (200):
 
 ```json
 {
   "success": true,
-  "message": "fetch customer menus success",
-  "data": [
-    {
-      "menuId": 1,
-      "menuName": "..."
-    }
-  ]
+  "message": "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+  "data": {
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "categories": [
+      {
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก"
+      }
+    ],
+    "menus": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ]
+  }
 }
 ```
 
@@ -1431,6 +1448,47 @@ Expected Response (404):
 {
   "success": false,
   "message": "ไม่พบเมนู"
+}
+```
+
+### AC) Customer Menus ไม่ส่ง qrToken
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/customer/menus`  
+Headers: None
+
+Expected Response (400):
+
+```json
+{
+  "success": false,
+  "message": "กรุณาระบุ qrToken"
+}
+```
+
+### AD) Customer Menus QR หมดอายุ
+
+ใช้ qrToken ที่หมดอายุแล้ว
+
+Expected Response (410):
+
+```json
+{
+  "success": false,
+  "message": "QR หมดอายุ"
+}
+```
+
+### AE) Customer Menus session ปิดแล้ว
+
+ใช้ qrToken ของ session ที่ปิดแล้ว
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดแล้ว"
 }
 ```
 

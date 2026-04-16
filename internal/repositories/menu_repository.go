@@ -19,52 +19,65 @@ func NewMenuRepository(db *pgxpool.Pool) *MenuRepository {
 	return &MenuRepository{DB: db}
 }
 
-func (r *MenuRepository) GetCustomerMenus(ctx context.Context) ([]models.Menu, error) {
-	query := `
-		SELECT
-			m.menu_id,
-			m.menu_name,
-			m.category_id,
-			c.category_name,
-			m.price,
-			COALESCE(m.description, '') AS description,
-			m.menu_status,
-			m.created_at
-		FROM menus m
-		JOIN menu_categories c ON m.category_id = c.category_id
-		WHERE m.menu_status = TRUE
-		ORDER BY c.category_name ASC, m.menu_name ASC
-	`
-
-	rows, err := r.DB.Query(ctx, query)
+func (r *MenuRepository) GetCustomerMenus(ctx context.Context, tableID int) (*models.CustomerMenuResponse, error) {
+	// get table info
+	var table models.CustomerMenuTable
+	err := r.DB.QueryRow(ctx, `SELECT table_id, table_number FROM restaurant_tables WHERE table_id = $1`, tableID).Scan(
+		&table.TableID,
+		&table.TableNumber,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("INTERNAL")
 	}
-	defer rows.Close()
 
-	var menus []models.Menu
-	for rows.Next() {
-		var m models.Menu
-		if err := rows.Scan(
-			&m.MenuID,
-			&m.MenuName,
-			&m.CategoryID,
-			&m.CategoryName,
-			&m.Price,
-			&m.Description,
-			&m.MenuStatus,
-			&m.CreatedAt,
-		); err != nil {
-			return nil, err
+	// get categories
+	catRows, err := r.DB.Query(ctx, `SELECT category_id, category_name FROM menu_categories ORDER BY category_id ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	defer catRows.Close()
+
+	var categories []models.CustomerMenuCategory
+	for catRows.Next() {
+		var c models.CustomerMenuCategory
+		if err := catRows.Scan(&c.CategoryID, &c.CategoryName); err != nil {
+			return nil, fmt.Errorf("INTERNAL")
+		}
+		categories = append(categories, c)
+	}
+	if categories == nil {
+		categories = []models.CustomerMenuCategory{}
+	}
+
+	// get active menus
+	menuRows, err := r.DB.Query(ctx, `
+		SELECT menu_id, menu_name, price, COALESCE(description, '') AS description, menu_status
+		FROM menus
+		WHERE menu_status = TRUE
+		ORDER BY menu_id ASC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	defer menuRows.Close()
+
+	var menus []models.CustomerMenuItem
+	for menuRows.Next() {
+		var m models.CustomerMenuItem
+		if err := menuRows.Scan(&m.MenuID, &m.MenuName, &m.Price, &m.Description, &m.MenuStatus); err != nil {
+			return nil, fmt.Errorf("INTERNAL")
 		}
 		menus = append(menus, m)
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
+	if menus == nil {
+		menus = []models.CustomerMenuItem{}
 	}
 
-	return menus, nil
+	return &models.CustomerMenuResponse{
+		Table:      table,
+		Categories: categories,
+		Menus:      menus,
+	}, nil
 }
 
 func (r *MenuRepository) GetAll(ctx context.Context, categoryID *int, keyword string, status *bool, page, limit int) ([]models.Menu, int, error) {

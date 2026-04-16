@@ -18,19 +18,49 @@ func NewMenuHandler(service *services.MenuService) *MenuHandler {
 }
 
 func (h *MenuHandler) GetCustomerMenus(c *fiber.Ctx) error {
-	menus, err := h.service.GetCustomerMenus(c.UserContext())
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+	qrToken := c.Query("qrToken")
+	if qrToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
 			Success: false,
-			Message: "failed to fetch customer menus",
-			Data:    err.Error(),
+			Message: "กรุณาระบุ qrToken",
+			Data:    nil,
 		})
+	}
+
+	resp, err := h.service.GetCustomerMenus(c.UserContext(), qrToken)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ QR",
+				Data:    nil,
+			})
+		case "GONE":
+			return c.Status(fiber.StatusGone).JSON(models.APIResponse{
+				Success: false,
+				Message: "QR หมดอายุ",
+				Data:    nil,
+			})
+		case "UNPROCESSABLE":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ปิดแล้ว",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
 		Success: true,
-		Message: "fetch customer menus success",
-		Data:    menus,
+		Message: "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+		Data:    resp,
 	})
 }
 

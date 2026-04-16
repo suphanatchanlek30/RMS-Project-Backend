@@ -197,7 +197,7 @@ docker compose up --build -d
 ### Public
 
 - `GET /health`
-- `GET /api/v1/customer/menus`
+- `GET /api/v1/customer/menus?qrToken=xxx`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/qr/:token`
 - `GET /api/v1/categories`
