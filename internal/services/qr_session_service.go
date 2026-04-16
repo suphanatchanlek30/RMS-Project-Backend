@@ -44,6 +44,15 @@ func (s *QRSessionService) CreateQRSession(ctx context.Context, req models.Creat
 	return resp, nil
 }
 
+func (s *QRSessionService) GetByID(ctx context.Context, qrSessionID int) (*models.QRSessionDetail, error) {
+	resp, err := s.repo.GetByID(ctx, qrSessionID)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	return resp, nil
+}
+
 func (s *QRSessionService) VerifyQR(ctx context.Context, token string) (*models.VerifyQRResponse, error) {
 	resp, err := s.repo.GetByToken(ctx, token)
 	if err != nil {

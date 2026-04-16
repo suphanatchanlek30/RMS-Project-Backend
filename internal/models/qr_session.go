@@ -23,3 +23,10 @@ type VerifyQRResponse struct {
 	SessionStatus string    `json:"sessionStatus"`
 	ExpiredAt     time.Time `json:"expiredAt"`
 }
+
+type QRSessionDetail struct {
+	QRSessionID int       `json:"qrSessionId"`
+	SessionID   int       `json:"sessionId"`
+	QRCodeURL   string    `json:"qrCodeUrl"`
+	ExpiredAt   time.Time `json:"expiredAt"`
+}

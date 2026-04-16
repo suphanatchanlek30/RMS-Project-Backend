@@ -656,14 +656,39 @@ Expected Response (201):
 }
 ```
 
-### 2️⃣1️⃣ Verify QR Token (Public)
+### 2️⃣1️⃣ Get QR Session By ID (ADMIN หรือ CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr-sessions/1`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล QR Session สำเร็จ",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "qrCodeUrl": "http://localhost:3000/q/abcxyz123",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣2️⃣ Verify QR Token (Public)
 
 Method: `GET`  
 URL: `{{baseUrl}}/api/v1/qr/{{qrToken}}`  
 Headers: None  
 Body: None
 
-หมายเหตุ: ใช้ค่า `qrToken` ที่ได้จากข้อ 2️⃣0️⃣ (เก็บไว้ใน Postman environment variable `qrToken`)
+หมายเหตุ: ใช้ค่า `qrToken` ที่ได้จากข้อ 2️⃣0️⃣ 
 
 Expected Response (200):
 
@@ -682,7 +707,7 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣2️⃣ Logout
+### 2️⃣3️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -951,6 +976,23 @@ Expected Response (422):
 }
 ```
 
+### S) Get QR Session By ID ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr-sessions/99999`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ QR Session"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -973,6 +1015,7 @@ Expected Response (422):
 - `GET /api/v1/tables/:tableId/current-session`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
+- `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/qr/:token`
 
 ## คำสั่งช่วยตรวจสถานะ

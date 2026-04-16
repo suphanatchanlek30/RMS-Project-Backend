@@ -219,6 +219,7 @@ docker compose up --build -d
 - `GET /api/v1/tables/:tableId`
 - `GET /api/v1/tables/:tableId/current-session`
 - `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/qr-sessions/:qrSessionId`
 
 ### CASHIER เท่านั้น
 

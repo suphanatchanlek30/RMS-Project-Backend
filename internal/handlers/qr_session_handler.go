@@ -64,6 +64,32 @@ func (h *QRSessionHandler) CreateQRSession(c *fiber.Ctx) error {
 	})
 }
 
+func (h *QRSessionHandler) GetByID(c *fiber.Ctx) error {
+	qrSessionID, err := c.ParamsInt("qrSessionId")
+	if err != nil || qrSessionID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.GetByID(c.UserContext(), qrSessionID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+			Success: false,
+			Message: "ไม่พบ QR Session",
+			Data:    nil,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงข้อมูล QR Session สำเร็จ",
+		Data:    resp,
+	})
+}
+
 func (h *QRSessionHandler) VerifyQR(c *fiber.Ctx) error {
 	token := c.Params("token")
 	if token == "" {

@@ -66,6 +66,27 @@ func (r *QRSessionRepository) CreateQRSession(ctx context.Context, sessionID int
 	return &resp, nil
 }
 
+func (r *QRSessionRepository) GetByID(ctx context.Context, qrSessionID int) (*models.QRSessionDetail, error) {
+	query := `
+		SELECT qr_session_id, session_id, qr_code_url, expired_at
+		FROM qr_sessions
+		WHERE qr_session_id = $1
+	`
+
+	var resp models.QRSessionDetail
+	err := r.DB.QueryRow(ctx, query, qrSessionID).Scan(
+		&resp.QRSessionID,
+		&resp.SessionID,
+		&resp.QRCodeURL,
+		&resp.ExpiredAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (r *QRSessionRepository) GetByToken(ctx context.Context, token string) (*models.VerifyQRResponse, error) {
 	query := `
 		SELECT qs.qr_session_id, qs.session_id, ts.table_id, rt.table_number, ts.session_status, qs.expired_at
