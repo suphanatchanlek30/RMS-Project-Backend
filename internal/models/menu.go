@@ -12,3 +12,21 @@ type Menu struct {
 	MenuStatus   bool      `json:"menuStatus"`
 	CreatedAt    time.Time `json:"createdAt"`
 }
+
+type CreateMenuRequest struct {
+	MenuName    string  `json:"menuName"`
+	CategoryID  int     `json:"categoryId"`
+	Price       float64 `json:"price"`
+	Description string  `json:"description"`
+	MenuStatus  bool    `json:"menuStatus"`
+}
+
+type CreateMenuResponse struct {
+	MenuID      int       `json:"menuId"`
+	MenuName    string    `json:"menuName"`
+	CategoryID  int       `json:"categoryId"`
+	Price       float64   `json:"price"`
+	Description *string   `json:"description"`
+	MenuStatus  bool      `json:"menuStatus"`
+	CreatedAt   time.Time `json:"createdAt"`
+}

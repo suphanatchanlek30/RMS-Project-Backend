@@ -31,3 +31,53 @@ func (h *MenuHandler) GetCustomerMenus(c *fiber.Ctx) error {
 		Data:    menus,
 	})
 }
+
+func (h *MenuHandler) Create(c *fiber.Ctx) error {
+	var req models.CreateMenuRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.MenuName == "" || req.CategoryID <= 0 || req.Price < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.Create(c.UserContext(), req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบหมวดหมู่",
+				Data:    nil,
+			})
+		case "CONFLICT":
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "ชื่อเมนูซ้ำ",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(models.APIResponse{
+		Success: true,
+		Message: "สร้างเมนูสำเร็จ",
+		Data:    resp,
+	})
+}

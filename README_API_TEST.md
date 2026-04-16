@@ -795,7 +795,46 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣6️⃣ Logout
+### 2️⃣6️⃣ Create Menu (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้ง",
+  "categoryId": 1,
+  "price": 89.00,
+  "description": "ข้าวผัดกุ้งสด",
+  "menuStatus": true
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true,
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣7️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1134,6 +1173,49 @@ Expected Response (409):
 }
 ```
 
+### W) Create Menu category ไม่พบ
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "categoryId": 99999,
+  "price": 50.00,
+  "description": "ทดสอบ",
+  "menuStatus": true
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### X) Create Menu ชื่อซ้ำ
+
+สร้างเมนูด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1161,6 +1243,7 @@ Expected Response (409):
 - `POST /api/v1/categories`
 - `GET /api/v1/categories`
 - `PATCH /api/v1/categories/:categoryId`
+- `POST /api/v1/menus`
 
 ## คำสั่งช่วยตรวจสถานะ
 

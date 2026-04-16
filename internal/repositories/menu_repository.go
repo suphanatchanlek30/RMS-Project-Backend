@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 
@@ -62,4 +64,34 @@ func (r *MenuRepository) GetCustomerMenus(ctx context.Context) ([]models.Menu, e
 	}
 
 	return menus, nil
+}
+
+func (r *MenuRepository) Create(ctx context.Context, req models.CreateMenuRequest) (*models.CreateMenuResponse, error) {
+	query := `
+		INSERT INTO menus (menu_name, category_id, price, description, menu_status)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING menu_id, menu_name, category_id, price, description, menu_status, created_at
+	`
+
+	var resp models.CreateMenuResponse
+	err := r.DB.QueryRow(ctx, query, req.MenuName, req.CategoryID, req.Price, req.Description, req.MenuStatus).Scan(
+		&resp.MenuID,
+		&resp.MenuName,
+		&resp.CategoryID,
+		&resp.Price,
+		&resp.Description,
+		&resp.MenuStatus,
+		&resp.CreatedAt,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "foreign key") || strings.Contains(err.Error(), "violates foreign key") {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			return nil, fmt.Errorf("CONFLICT")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &resp, nil
 }
