@@ -30,3 +30,12 @@ type CreateMenuResponse struct {
 	MenuStatus  bool      `json:"menuStatus"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+type MenuDetail struct {
+	MenuID      int     `json:"menuId"`
+	MenuName    string  `json:"menuName"`
+	CategoryID  int     `json:"categoryId"`
+	Price       float64 `json:"price"`
+	Description *string `json:"description"`
+	MenuStatus  bool    `json:"menuStatus"`
+}

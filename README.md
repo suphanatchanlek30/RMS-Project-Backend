@@ -227,6 +227,7 @@ docker compose up --build -d
 - `GET /api/v1/table-sessions/:sessionId`
 - `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
 
 ### CASHIER เท่านั้น
 

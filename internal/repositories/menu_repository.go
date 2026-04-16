@@ -163,6 +163,32 @@ func (r *MenuRepository) GetAll(ctx context.Context, categoryID *int, keyword st
 	return menus, total, nil
 }
 
+func (r *MenuRepository) GetByID(ctx context.Context, menuID int) (*models.MenuDetail, error) {
+	query := `
+		SELECT menu_id, menu_name, category_id, price, description, menu_status
+		FROM menus
+		WHERE menu_id = $1
+	`
+
+	var m models.MenuDetail
+	err := r.DB.QueryRow(ctx, query, menuID).Scan(
+		&m.MenuID,
+		&m.MenuName,
+		&m.CategoryID,
+		&m.Price,
+		&m.Description,
+		&m.MenuStatus,
+	)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &m, nil
+}
+
 func (r *MenuRepository) Create(ctx context.Context, req models.CreateMenuRequest) (*models.CreateMenuResponse, error) {
 	query := `
 		INSERT INTO menus (menu_name, category_id, price, description, menu_status)

@@ -879,7 +879,32 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣8️⃣ Logout
+### 2️⃣8️⃣ Get Menu By ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true
+  }
+}
+```
+
+### 2️⃣9️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1261,6 +1286,23 @@ Expected Response (409):
 }
 ```
 
+### Y) Get Menu By ID ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1290,6 +1332,7 @@ Expected Response (409):
 - `PATCH /api/v1/categories/:categoryId`
 - `POST /api/v1/menus`
 - `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
 
 ## คำสั่งช่วยตรวจสถานะ
 

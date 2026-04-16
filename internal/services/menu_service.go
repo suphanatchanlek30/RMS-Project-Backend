@@ -28,6 +28,19 @@ func (s *MenuService) GetAll(ctx context.Context, categoryID *int, keyword strin
 	return items, total, nil
 }
 
+func (s *MenuService) GetByID(ctx context.Context, menuID int) (*models.MenuDetail, error) {
+	m, err := s.repo.GetByID(ctx, menuID)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return nil, fmt.Errorf("NOT_FOUND")
+		default:
+			return nil, fmt.Errorf("INTERNAL")
+		}
+	}
+	return m, nil
+}
+
 func (s *MenuService) Create(ctx context.Context, req models.CreateMenuRequest) (*models.CreateMenuResponse, error) {
 	resp, err := s.repo.Create(ctx, req)
 	if err != nil {
