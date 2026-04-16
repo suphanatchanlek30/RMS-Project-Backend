@@ -80,4 +80,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 
 	v1.Post("/categories", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Create)
 	v1.Get("/categories", categoryHandler.GetAll)
+	v1.Patch("/categories/:categoryId", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Update)
 }

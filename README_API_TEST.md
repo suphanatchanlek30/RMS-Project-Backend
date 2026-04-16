@@ -763,7 +763,39 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣5️⃣ Logout
+### 2️⃣5️⃣ Update Category (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/2`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่มเย็น",
+  "description": "หมวดเครื่องดื่มเย็น"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่มเย็น",
+    "description": "หมวดเครื่องดื่มเย็น"
+  }
+}
+```
+
+### 2️⃣6️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1062,6 +1094,46 @@ Expected Response (409):
 }
 ```
 
+### U) Update Category ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "ทดสอบ",
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### V) Update Category ชื่อซ้ำ
+
+แก้ไขชื่อหมวดหมู่เป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1088,6 +1160,7 @@ Expected Response (409):
 - `GET /api/v1/qr/:token`
 - `POST /api/v1/categories`
 - `GET /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
 
 ## คำสั่งช่วยตรวจสถานะ
 

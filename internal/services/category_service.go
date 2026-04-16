@@ -36,3 +36,19 @@ func (s *CategoryService) GetAll(ctx context.Context) ([]models.CategoryListItem
 
 	return categories, nil
 }
+
+func (s *CategoryService) Update(ctx context.Context, categoryID int, req models.UpdateCategoryRequest) (*models.CategoryListItem, error) {
+	resp, err := s.repo.Update(ctx, categoryID, req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return nil, fmt.Errorf("NOT_FOUND")
+		case "CONFLICT":
+			return nil, fmt.Errorf("CONFLICT")
+		default:
+			return nil, fmt.Errorf("INTERNAL")
+		}
+	}
+
+	return resp, nil
+}

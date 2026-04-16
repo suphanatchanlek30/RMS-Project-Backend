@@ -218,6 +218,7 @@ docker compose up --build -d
 - `POST /api/v1/tables`
 - `PATCH /api/v1/tables/:tableId`
 - `POST /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`

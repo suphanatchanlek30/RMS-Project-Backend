@@ -19,3 +19,8 @@ type CategoryListItem struct {
 	CategoryName string  `json:"categoryName"`
 	Description  *string `json:"description"`
 }
+
+type UpdateCategoryRequest struct {
+	CategoryName string `json:"categoryName"`
+	Description  string `json:"description"`
+}

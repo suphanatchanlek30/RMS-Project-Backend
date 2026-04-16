@@ -74,3 +74,61 @@ func (h *CategoryHandler) GetAll(c *fiber.Ctx) error {
 		Data:    categories,
 	})
 }
+
+func (h *CategoryHandler) Update(c *fiber.Ctx) error {
+	categoryID, err := c.ParamsInt("categoryId")
+	if err != nil || categoryID <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	var req models.UpdateCategoryRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.CategoryName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.Update(c.UserContext(), categoryID, req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบหมวดหมู่",
+				Data:    nil,
+			})
+		case "CONFLICT":
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "ชื่อหมวดหมู่ซ้ำ",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตหมวดหมู่สำเร็จ",
+		Data:    resp,
+	})
+}

@@ -69,3 +69,30 @@ func (r *CategoryRepository) GetAll(ctx context.Context) ([]models.CategoryListI
 
 	return categories, nil
 }
+
+func (r *CategoryRepository) Update(ctx context.Context, categoryID int, req models.UpdateCategoryRequest) (*models.CategoryListItem, error) {
+	query := `
+		UPDATE menu_categories
+		SET category_name = $1, description = $2
+		WHERE category_id = $3
+		RETURNING category_id, category_name, description
+	`
+
+	var resp models.CategoryListItem
+	err := r.DB.QueryRow(ctx, query, req.CategoryName, req.Description, categoryID).Scan(
+		&resp.CategoryID,
+		&resp.CategoryName,
+		&resp.Description,
+	)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			return nil, fmt.Errorf("CONFLICT")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return &resp, nil
+}
