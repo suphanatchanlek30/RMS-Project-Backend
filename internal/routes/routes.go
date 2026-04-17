@@ -17,10 +17,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	tableService := services.NewTableService(tableRepo)
 	tableHandler := handlers.NewTableHandler(tableService)
 
-	menuRepo := repositories.NewMenuRepository(db)
-	menuService := services.NewMenuService(menuRepo)
-	menuHandler := handlers.NewMenuHandler(menuService)
-
 	roleRepo := repositories.NewRoleRepository(db)
 	roleService := services.NewRoleService(roleRepo)
 	roleHandler := handlers.NewRoleHandler(roleService)
@@ -32,6 +28,22 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	employeeRepo := repositories.NewEmployeeRepository(db)
 	employeeService := services.NewEmployeeService(employeeRepo)
 	employeeHandler := handlers.NewEmployeeHandler(employeeService)
+
+	tableSessionRepo := repositories.NewTableSessionRepository(db)
+	tableSessionService := services.NewTableSessionService(tableSessionRepo)
+	tableSessionHandler := handlers.NewTableSessionHandler(tableSessionService)
+
+	qrSessionRepo := repositories.NewQRSessionRepository(db)
+	qrSessionService := services.NewQRSessionService(qrSessionRepo, tableSessionRepo)
+	qrSessionHandler := handlers.NewQRSessionHandler(qrSessionService)
+
+	menuRepo := repositories.NewMenuRepository(db)
+	menuService := services.NewMenuService(menuRepo, qrSessionRepo)
+	menuHandler := handlers.NewMenuHandler(menuService)
+
+	categoryRepo := repositories.NewCategoryRepository(db)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
 	app.Get("/health", healthHandler.Check)
 
@@ -56,4 +68,23 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.GetEmployeeByID)
 	v1.Patch("/employees/:employeeId", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployee)
 	v1.Patch("/employees/:employeeId/status", middleware.Protected(), middleware.AdminOnly(), employeeHandler.UpdateEmployeeStatus)
+
+	v1.Post("/table-sessions/open", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.OpenTable)
+	v1.Get("/table-sessions/:sessionId", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetByID)
+	v1.Get("/tables/:tableId/current-session", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetCurrentByTableID)
+	v1.Patch("/table-sessions/:sessionId/close", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.CloseSession)
+
+	v1.Post("/qr-sessions", middleware.Protected(), middleware.CashierOnly(), qrSessionHandler.CreateQRSession)
+	v1.Get("/qr-sessions/:qrSessionId", middleware.Protected(), middleware.AdminOrCashier(), qrSessionHandler.GetByID)
+	v1.Get("/qr/:token", qrSessionHandler.VerifyQR)
+
+	v1.Post("/categories", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Create)
+	v1.Get("/categories", categoryHandler.GetAll)
+	v1.Patch("/categories/:categoryId", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Update)
+
+	v1.Get("/menus", middleware.Protected(), middleware.AdminOrCashier(), menuHandler.GetAll)
+	v1.Get("/menus/:menuId", middleware.Protected(), middleware.AdminOrCashier(), menuHandler.GetByID)
+	v1.Post("/menus", middleware.Protected(), middleware.AdminOnly(), menuHandler.Create)
+	v1.Patch("/menus/:menuId", middleware.Protected(), middleware.AdminOnly(), menuHandler.Update)
+	v1.Patch("/menus/:menuId/status", middleware.Protected(), middleware.AdminOnly(), menuHandler.UpdateStatus)
 }
