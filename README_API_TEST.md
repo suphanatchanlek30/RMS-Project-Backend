@@ -1058,6 +1058,201 @@ Expected Response (200):
 }
 ```
 
+### 3️⃣2️⃣ Customer Create Order (Public)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/customer/orders`  
+Headers:
+
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "qrToken": "abcxyz123",
+  "items": [
+    { "menuId": 101, "quantity": 2 },
+    { "menuId": 102, "quantity": 1 }
+  ]
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างคำสั่งซื้อสำเร็จ",
+  "data": {
+    "orderId": 9001,
+    "sessionId": 1001,
+    "tableId": 1,
+    "orderTime": "2025-08-20T12:10:00Z",
+    "orderStatus": "PENDING",
+    "items": [
+      {
+        "orderItemId": 1,
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "itemStatus": "WAITING"
+      },
+      {
+        "orderItemId": 2,
+        "menuId": 102,
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "itemStatus": "WAITING"
+      }
+    ]
+  }
+}
+```
+
+### 3️⃣3️⃣ Customer Get Orders (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/customer/orders?qrToken={{qrToken}}`  
+Headers: None  
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงคำสั่งซื้อของลูกค้าสำเร็จ",
+  "data": [
+    {
+      "orderId": 9001,
+      "orderTime": "2025-08-20T12:10:00Z",
+      "orderStatus": "PENDING",
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "unitPrice": 89,
+          "itemStatus": "WAITING"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 3️⃣4️⃣ Cashier Create Order
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/orders`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1001,
+  "tableId": 1,
+  "createdByEmployeeId": 12,
+  "items": [
+    { "menuId": 101, "quantity": 1 }
+  ]
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างคำสั่งซื้อสำเร็จ",
+  "data": {
+    "orderId": 9002,
+    "sessionId": 1001,
+    "tableId": 1,
+    "createdByEmployeeId": 12,
+    "orderTime": "2025-08-20T12:15:00Z",
+    "orderStatus": "PENDING",
+    "items": [
+      {
+        "orderItemId": 3,
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 1,
+        "unitPrice": 89,
+        "itemStatus": "WAITING"
+      }
+    ]
+  }
+}
+```
+
+### 3️⃣5️⃣ Get Order By ID
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/orders/9001`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล order สำเร็จ",
+  "data": {
+    "orderId": 9001,
+    "sessionId": 1001,
+    "tableId": 1,
+    "createdByEmployeeId": null,
+    "orderTime": "2025-08-20T12:10:00Z",
+    "orderStatus": "PENDING"
+  }
+}
+```
+
+### 3️⃣6️⃣ Get Orders By Session
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1001/orders`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการ order ของโต๊ะสำเร็จ",
+  "data": [
+    {
+      "orderId": 9001,
+      "orderTime": "2025-08-20T12:10:00Z",
+      "orderStatus": "PENDING"
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลองเพิ่ม
+
+- `items` ว่าง -> `400 ข้อมูลไม่ถูกต้อง`
+- `menuId` ไม่พบ -> `404 ไม่พบ QR หรือเมนู` หรือ `404 ไม่พบข้อมูลที่ต้องการ` ตามเส้นที่เรียก
+- `qrToken` หมดอายุ -> `410 QR หมดอายุ`
+- `session` ปิดแล้ว หรือเมนูปิดขาย -> `422 เมนูปิดขาย/โต๊ะไม่พร้อมใช้งาน`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
