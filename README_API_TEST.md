@@ -707,7 +707,95 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣3️⃣ Logout
+### 2️⃣3️⃣ Create Category (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่ม",
+  "description": "เมนูเครื่องดื่ม"
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่ม",
+    "description": "เมนูเครื่องดื่ม",
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣4️⃣ Get All Categories (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers: None  
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงหมวดหมู่สำเร็จ",
+  "data": [
+    {
+      "categoryId": 1,
+      "categoryName": "อาหารจานหลัก",
+      "description": "เมนูอาหารหลักของร้าน"
+    }
+  ]
+}
+```
+
+### 2️⃣5️⃣ Update Category (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/2`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่มเย็น",
+  "description": "หมวดเครื่องดื่มเย็น"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่มเย็น",
+    "description": "หมวดเครื่องดื่มเย็น"
+  }
+}
+```
+
+### 2️⃣6️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -993,6 +1081,59 @@ Expected Response (404):
 }
 ```
 
+### T) Create Category ชื่อซ้ำ
+
+สร้างหมวดหมู่ด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
+### U) Update Category ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "ทดสอบ",
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### V) Update Category ชื่อซ้ำ
+
+แก้ไขชื่อหมวดหมู่เป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1017,6 +1158,9 @@ Expected Response (404):
 - `POST /api/v1/qr-sessions`
 - `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/qr/:token`
+- `POST /api/v1/categories`
+- `GET /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
 
 ## คำสั่งช่วยตรวจสถานะ
 

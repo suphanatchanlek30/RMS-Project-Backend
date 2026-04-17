@@ -41,6 +41,7 @@ internal/
     table_handler.go
     table_session_handler.go
     qr_session_handler.go
+    category_handler.go
   middleware/
     auth_middleware.go
   models/
@@ -52,6 +53,7 @@ internal/
     table.go
     table_session.go
     qr_session.go
+    category.go
   repositories/
     auth_repository.go
     employee_repository.go
@@ -60,6 +62,7 @@ internal/
     table_repository.go
     table_session_repository.go
     qr_session_repository.go
+    category_repository.go
   routes/
     routes.go
   services/
@@ -70,6 +73,7 @@ internal/
     table_service.go
     table_session_service.go
     qr_session_service.go
+    category_service.go
   utils/
     jwt.go
     password.go
@@ -196,6 +200,7 @@ docker compose up --build -d
 - `GET /api/v1/customer/menus`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/qr/:token`
+- `GET /api/v1/categories`
 
 ### ต้องมี Bearer Token
 
@@ -212,8 +217,8 @@ docker compose up --build -d
 - `PATCH /api/v1/employees/:employeeId/status`
 - `POST /api/v1/tables`
 - `PATCH /api/v1/tables/:tableId`
-
-### ADMIN หรือ CASHIER
+- `POST /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`
