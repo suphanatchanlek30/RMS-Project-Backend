@@ -55,6 +55,59 @@ WHERE email = 'chef@rms.com';
 - `cashierPassword` = `Cashier1234!`
 - `cashierToken` = (ค่าว่างไว้ก่อน)
 
+## วิธีเทส Customer Menus ผ่าน QR Token
+
+ถ้าต้องการเทสเส้น `GET /api/v1/customer/menus` ให้ทำตามลำดับนี้
+
+1. ล็อกอินด้วยบัญชี `cashier` เพื่อเอา `cashierToken`
+2. เปิดโต๊ะด้วย `POST /api/v1/table-sessions/open`
+3. สร้าง QR Session ด้วย `POST /api/v1/qr-sessions`
+4. เอา `qrToken` จาก response ที่ได้
+5. เรียก `GET /api/v1/customer/menus?qrToken={{qrToken}}`
+
+ตัวอย่าง request ของเส้น customer menus
+
+```http
+GET {{baseUrl}}/api/v1/customer/menus?qrToken={{qrToken}}
+Authorization: None
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+  "data": {
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "categories": [
+      {
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก"
+      }
+    ],
+    "menus": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่ส่ง `qrToken` -> `400 กรุณาระบุ qrToken`
+- ใช้ `qrToken` ที่หมดอายุ -> `410 QR หมดอายุ`
+- ใช้ `qrToken` ของ session ที่ปิดแล้ว -> `422 session ปิดแล้ว`
+
 ## ขั้นตอนการใช้งาน (ทดสอบลำดับนี้)
 
 ### 1️⃣ Health Check
@@ -164,22 +217,39 @@ Expected Response (200):
 ### 5️⃣ Customer Menus (Public)
 
 Method: `GET`  
-URL: `{{baseUrl}}/api/v1/customer/menus`  
+URL: `{{baseUrl}}/api/v1/customer/menus?qrToken={{qrToken}}`  
 Headers: None  
 Body: None
+
+> ใช้ `qrToken` ที่ได้จากการสร้าง QR Session (หรือจาก Verify QR)
 
 Expected Response (200):
 
 ```json
 {
   "success": true,
-  "message": "fetch customer menus success",
-  "data": [
-    {
-      "menuId": 1,
-      "menuName": "..."
-    }
-  ]
+  "message": "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+  "data": {
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "categories": [
+      {
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก"
+      }
+    ],
+    "menus": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ]
+  }
 }
 ```
 
@@ -471,7 +541,504 @@ Expected Response (200):
 }
 ```
 
-### 1️⃣5️⃣ Logout
+### 1️⃣5️⃣ Login (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/auth/login`  
+Headers:
+
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "email": "{{cashierEmail}}",
+  "password": "{{cashierPassword}}"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "เข้าสู่ระบบสำเร็จ",
+  "data": {
+    "employeeId": 2,
+    "employeeName": "Cashier User",
+    "roleId": 2,
+    "roleName": "CASHIER",
+    "accessToken": "<JWT_TOKEN>",
+    "tokenType": "Bearer"
+  }
+}
+```
+
+สำคัญ: คัดลอก `data.accessToken` ไปเก็บใน `cashierToken`
+
+### 1️⃣6️⃣ Open Table Session (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 1,
+  "employeeId": 2
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "เปิดโต๊ะสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "startTime": "2025-08-20T12:00:00Z",
+    "sessionStatus": "OPEN"
+  }
+}
+```
+
+
+### 1️⃣7️⃣ Get Table Session By ID (ADMIN หรือ CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล session สำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "startTime": "2025-08-20T12:00:00Z",
+    "endTime": null,
+    "sessionStatus": "OPEN"
+  }
+}
+```
+
+### 1️⃣8️⃣ Get Current Session By Table ID (ADMIN หรือ CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/tables/1/current-session`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึง session ปัจจุบันสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "sessionStatus": "OPEN",
+    "startTime": "2025-08-20T12:00:00Z"
+  }
+}
+```
+
+### 1️⃣9️⃣ Close Table Session (CASHIER)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1/close`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ปิดโต๊ะสำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "sessionStatus": "CLOSED",
+    "endTime": "2025-08-20T14:00:00Z",
+    "tableId": 1,
+    "tableStatus": "AVAILABLE"
+  }
+}
+```
+
+### 2️⃣0️⃣ Create QR Session (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/qr-sessions`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1
+}
+```
+
+หมายเหตุ: ต้องเปิดโต๊ะใหม่ก่อน (ถ้า session 1 ถูกปิดไปแล้วจากข้อ 1️⃣9️⃣) โดยใช้ข้อ 1️⃣6️⃣ แล้วใส่ sessionId ใหม่ที่ได้
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้าง QR Session สำเร็จ",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "qrCodeUrl": "http://localhost:3000/q/abcxyz123",
+    "qrToken": "abcxyz123",
+    "createdAt": "2025-08-20T12:00:00Z",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣1️⃣ Get QR Session By ID (ADMIN หรือ CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr-sessions/1`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล QR Session สำเร็จ",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "qrCodeUrl": "http://localhost:3000/q/abcxyz123",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣2️⃣ Verify QR Token (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr/{{qrToken}}`  
+Headers: None  
+Body: None
+
+หมายเหตุ: ใช้ค่า `qrToken` ที่ได้จากข้อ 2️⃣0️⃣ 
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "QR ใช้งานได้",
+  "data": {
+    "qrSessionId": 1,
+    "sessionId": 2,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "sessionStatus": "OPEN",
+    "expiredAt": "2025-08-20T16:00:00Z"
+  }
+}
+```
+
+### 2️⃣3️⃣ Create Category (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่ม",
+  "description": "เมนูเครื่องดื่ม"
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่ม",
+    "description": "เมนูเครื่องดื่ม",
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣4️⃣ Get All Categories (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/categories`  
+Headers: None  
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงหมวดหมู่สำเร็จ",
+  "data": [
+    {
+      "categoryId": 1,
+      "categoryName": "อาหารจานหลัก",
+      "description": "เมนูอาหารหลักของร้าน"
+    }
+  ]
+}
+```
+
+### 2️⃣5️⃣ Update Category (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/2`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "เครื่องดื่มเย็น",
+  "description": "หมวดเครื่องดื่มเย็น"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตหมวดหมู่สำเร็จ",
+  "data": {
+    "categoryId": 2,
+    "categoryName": "เครื่องดื่มเย็น",
+    "description": "หมวดเครื่องดื่มเย็น"
+  }
+}
+```
+
+### 2️⃣6️⃣ Create Menu (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้ง",
+  "categoryId": 1,
+  "price": 89.00,
+  "description": "ข้าวผัดกุ้งสด",
+  "menuStatus": true
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true,
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣7️⃣ Get All Menus (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus?page=1&limit=20`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Query Parameters (ทั้งหมดเป็น optional):
+
+| Parameter    | Description              | Example     |
+| ------------ | ------------------------ | ----------- |
+| `categoryId` | กรองตามหมวดหมู่           | `1`         |
+| `keyword`    | ค้นหาตามชื่อเมนู          | `ข้าวผัด`    |
+| `status`     | กรองตามสถานะ (`true`/`false`) | `true`  |
+| `page`       | หน้าที่ (default: 1)      | `1`         |
+| `limit`      | จำนวนต่อหน้า (default: 20) | `20`        |
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการเมนูสำเร็จ",
+  "data": {
+    "items": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+### 2️⃣8️⃣ Get Menu By ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true
+  }
+}
+```
+
+### 2️⃣9️⃣ Update Menu (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้งพิเศษ",
+  "price": 99.00,
+  "description": "เพิ่มกุ้ง"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้งพิเศษ",
+    "price": 99.00,
+    "description": "เพิ่มกุ้ง"
+  }
+}
+```
+
+### 3️⃣0️⃣ Update Menu Status (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตสถานะเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuStatus": false
+  }
+}
+```
+
+### 3️⃣1️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -537,6 +1104,447 @@ Expected: `409`
 
 Expected: `404`
 
+### F) Open Table Session ไม่พบโต๊ะ
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 99999,
+  "employeeId": 2
+}
+```
+
+Expected: `404`
+
+### G) Open Table Session โต๊ะกำลังใช้งานอยู่
+
+เปิดโต๊ะเดิมที่เปิดไปแล้วซ้ำอีกครั้ง
+
+Expected: `409`
+
+### H) Open Table Session ใช้ token ADMIN
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/table-sessions/open`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "tableId": 2,
+  "employeeId": 1
+}
+```
+
+Expected: `403`
+
+### I) Get Table Session By ID ไม่พบ session
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/table-sessions/99999`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ session"
+}
+```
+
+### J) Get Current Session โต๊ะไม่มี session เปิดอยู่
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/tables/3/current-session`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่มี session ที่เปิดอยู่"
+}
+```
+
+### K) Close Session ไม่พบ session
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/table-sessions/99999/close`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ session"
+}
+```
+
+### L) Close Session ที่ปิดไปแล้ว
+
+ปิด session เดิมซ้ำอีกครั้ง
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดไปแล้ว"
+}
+```
+
+### M) Close Session ที่ยังมีบิลค้างชำระ
+
+เปิดโต๊ะใหม่ สร้าง order ที่สถานะ PENDING แล้วลองปิด
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ยังมีบิลค้างชำระ"
+}
+```
+
+### N) Create QR Session ไม่พบ session
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/qr-sessions`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 99999
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ session"
+}
+```
+
+### O) Create QR Session ซ้ำ (มี QR active อยู่แล้ว)
+
+สร้าง QR Session ด้วย sessionId เดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "มี QR active อยู่แล้ว"
+}
+```
+
+### P) Verify QR token ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr/invalidtoken999`  
+Headers: None
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ QR"
+}
+```
+
+### Q) Verify QR ที่หมดอายุ
+
+รอให้ QR หมดอายุแล้วลองเรียกอีกครั้ง
+
+Expected Response (410):
+
+```json
+{
+  "success": false,
+  "message": "QR หมดอายุ"
+}
+```
+
+### R) Verify QR ที่ session ปิดแล้ว
+
+ปิด session แล้วลองเรียก QR token เดิม
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดแล้ว"
+}
+```
+
+### S) Get QR Session By ID ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/qr-sessions/99999`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบ QR Session"
+}
+```
+
+### T) Create Category ชื่อซ้ำ
+
+สร้างหมวดหมู่ด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
+### U) Update Category ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/categories/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "categoryName": "ทดสอบ",
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### V) Update Category ชื่อซ้ำ
+
+แก้ไขชื่อหมวดหมู่เป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อหมวดหมู่ซ้ำ"
+}
+```
+
+### W) Create Menu category ไม่พบ
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "categoryId": 99999,
+  "price": 50.00,
+  "description": "ทดสอบ",
+  "menuStatus": true
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### X) Create Menu ชื่อซ้ำ
+
+สร้างเมนูด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
+### Y) Get Menu By ID ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### Z) Update Menu ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "price": 50.00,
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### AA) Update Menu ชื่อซ้ำ
+
+แก้ไขชื่อเมนูเป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
+### AB) Update Menu Status ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### AC) Customer Menus ไม่ส่ง qrToken
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/customer/menus`  
+Headers: None
+
+Expected Response (400):
+
+```json
+{
+  "success": false,
+  "message": "กรุณาระบุ qrToken"
+}
+```
+
+### AD) Customer Menus QR หมดอายุ
+
+ใช้ qrToken ที่หมดอายุแล้ว
+
+Expected Response (410):
+
+```json
+{
+  "success": false,
+  "message": "QR หมดอายุ"
+}
+```
+
+### AE) Customer Menus session ปิดแล้ว
+
+ใช้ qrToken ของ session ที่ปิดแล้ว
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดแล้ว"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -554,6 +1562,21 @@ Expected: `404`
 - `GET /api/v1/tables/:tableId`
 - `POST /api/v1/tables`
 - `PATCH /api/v1/tables/:tableId`
+- `POST /api/v1/table-sessions/open`
+- `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/tables/:tableId/current-session`
+- `PATCH /api/v1/table-sessions/:sessionId/close`
+- `POST /api/v1/qr-sessions`
+- `GET /api/v1/qr-sessions/:qrSessionId`
+- `GET /api/v1/qr/:token`
+- `POST /api/v1/categories`
+- `GET /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
+- `POST /api/v1/menus`
+- `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 ## คำสั่งช่วยตรวจสถานะ
 

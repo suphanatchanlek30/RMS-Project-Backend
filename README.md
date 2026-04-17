@@ -39,6 +39,9 @@ internal/
     menu_handler.go
     role_handler.go
     table_handler.go
+    table_session_handler.go
+    qr_session_handler.go
+    category_handler.go
   middleware/
     auth_middleware.go
   models/
@@ -48,12 +51,18 @@ internal/
     menu.go
     role.go
     table.go
+    table_session.go
+    qr_session.go
+    category.go
   repositories/
     auth_repository.go
     employee_repository.go
     menu_repository.go
     role_repository.go
     table_repository.go
+    table_session_repository.go
+    qr_session_repository.go
+    category_repository.go
   routes/
     routes.go
   services/
@@ -62,6 +71,9 @@ internal/
     menu_service.go
     role_service.go
     table_service.go
+    table_session_service.go
+    qr_session_service.go
+    category_service.go
   utils/
     jwt.go
     password.go
@@ -185,8 +197,10 @@ docker compose up --build -d
 ### Public
 
 - `GET /health`
-- `GET /api/v1/customer/menus`
+- `GET /api/v1/customer/menus?qrToken=xxx`
 - `POST /api/v1/auth/login`
+- `GET /api/v1/qr/:token`
+- `GET /api/v1/categories`
 
 ### ต้องมี Bearer Token
 
@@ -203,11 +217,25 @@ docker compose up --build -d
 - `PATCH /api/v1/employees/:employeeId/status`
 - `POST /api/v1/tables`
 - `PATCH /api/v1/tables/:tableId`
-
-### ADMIN หรือ CASHIER
+- `POST /api/v1/categories`
+- `PATCH /api/v1/categories/:categoryId`
+- `POST /api/v1/menus`
+- `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`
+- `GET /api/v1/tables/:tableId/current-session`
+- `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/qr-sessions/:qrSessionId`
+- `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
+
+### CASHIER เท่านั้น
+
+- `POST /api/v1/table-sessions/open`
+- `PATCH /api/v1/table-sessions/:sessionId/close`
+- `POST /api/v1/qr-sessions`
 
 ## บัญชีสำหรับทดสอบ (จาก seed)
 

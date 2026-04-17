@@ -50,7 +50,7 @@ CREATE TABLE menu_categories (
 
 CREATE TABLE menus (
     menu_id SERIAL PRIMARY KEY,
-    menu_name VARCHAR(255) NOT NULL,
+    menu_name VARCHAR(255) NOT NULL UNIQUE,
     category_id INT NOT NULL REFERENCES menu_categories(category_id),
     price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
     description TEXT,
