@@ -39,6 +39,7 @@ internal/
     menu_handler.go
     role_handler.go
     table_handler.go
+    table_session_handler.go
   middleware/
     auth_middleware.go
   models/
@@ -48,12 +49,14 @@ internal/
     menu.go
     role.go
     table.go
+    table_session.go
   repositories/
     auth_repository.go
     employee_repository.go
     menu_repository.go
     role_repository.go
     table_repository.go
+    table_session_repository.go
   routes/
     routes.go
   services/
@@ -62,6 +65,7 @@ internal/
     menu_service.go
     role_service.go
     table_service.go
+    table_session_service.go
   utils/
     jwt.go
     password.go
@@ -208,6 +212,13 @@ docker compose up --build -d
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`
+- `GET /api/v1/tables/:tableId/current-session`
+- `GET /api/v1/table-sessions/:sessionId`
+
+### CASHIER เท่านั้น
+
+- `POST /api/v1/table-sessions/open`
+- `PATCH /api/v1/table-sessions/:sessionId/close`
 
 ## บัญชีสำหรับทดสอบ (จาก seed)
 
