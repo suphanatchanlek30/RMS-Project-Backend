@@ -197,7 +197,7 @@ docker compose up --build -d
 ### Public
 
 - `GET /health`
-- `GET /api/v1/customer/menus`
+- `GET /api/v1/customer/menus?qrToken=xxx`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/qr/:token`
 - `GET /api/v1/categories`
@@ -219,12 +219,17 @@ docker compose up --build -d
 - `PATCH /api/v1/tables/:tableId`
 - `POST /api/v1/categories`
 - `PATCH /api/v1/categories/:categoryId`
+- `POST /api/v1/menus`
+- `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`
 - `GET /api/v1/tables/:tableId/current-session`
 - `GET /api/v1/table-sessions/:sessionId`
 - `GET /api/v1/qr-sessions/:qrSessionId`
+- `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
 
 ### CASHIER เท่านั้น
 

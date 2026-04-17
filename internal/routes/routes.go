@@ -17,10 +17,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	tableService := services.NewTableService(tableRepo)
 	tableHandler := handlers.NewTableHandler(tableService)
 
-	menuRepo := repositories.NewMenuRepository(db)
-	menuService := services.NewMenuService(menuRepo)
-	menuHandler := handlers.NewMenuHandler(menuService)
-
 	roleRepo := repositories.NewRoleRepository(db)
 	roleService := services.NewRoleService(roleRepo)
 	roleHandler := handlers.NewRoleHandler(roleService)
@@ -40,6 +36,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	qrSessionRepo := repositories.NewQRSessionRepository(db)
 	qrSessionService := services.NewQRSessionService(qrSessionRepo, tableSessionRepo)
 	qrSessionHandler := handlers.NewQRSessionHandler(qrSessionService)
+
+	menuRepo := repositories.NewMenuRepository(db)
+	menuService := services.NewMenuService(menuRepo, qrSessionRepo)
+	menuHandler := handlers.NewMenuHandler(menuService)
 
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)
@@ -81,4 +81,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Post("/categories", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Create)
 	v1.Get("/categories", categoryHandler.GetAll)
 	v1.Patch("/categories/:categoryId", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Update)
+
+	v1.Get("/menus", middleware.Protected(), middleware.AdminOrCashier(), menuHandler.GetAll)
+	v1.Get("/menus/:menuId", middleware.Protected(), middleware.AdminOrCashier(), menuHandler.GetByID)
+	v1.Post("/menus", middleware.Protected(), middleware.AdminOnly(), menuHandler.Create)
+	v1.Patch("/menus/:menuId", middleware.Protected(), middleware.AdminOnly(), menuHandler.Update)
+	v1.Patch("/menus/:menuId/status", middleware.Protected(), middleware.AdminOnly(), menuHandler.UpdateStatus)
 }

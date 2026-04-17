@@ -164,22 +164,39 @@ Expected Response (200):
 ### 5️⃣ Customer Menus (Public)
 
 Method: `GET`  
-URL: `{{baseUrl}}/api/v1/customer/menus`  
+URL: `{{baseUrl}}/api/v1/customer/menus?qrToken={{qrToken}}`  
 Headers: None  
 Body: None
+
+> ใช้ `qrToken` ที่ได้จากการสร้าง QR Session (หรือจาก Verify QR)
 
 Expected Response (200):
 
 ```json
 {
   "success": true,
-  "message": "fetch customer menus success",
-  "data": [
-    {
-      "menuId": 1,
-      "menuName": "..."
-    }
-  ]
+  "message": "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+  "data": {
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "categories": [
+      {
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก"
+      }
+    ],
+    "menus": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ]
+  }
 }
 ```
 
@@ -795,7 +812,180 @@ Expected Response (200):
 }
 ```
 
-### 2️⃣6️⃣ Logout
+### 2️⃣6️⃣ Create Menu (ADMIN)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้ง",
+  "categoryId": 1,
+  "price": 89.00,
+  "description": "ข้าวผัดกุ้งสด",
+  "menuStatus": true
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "สร้างเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true,
+    "createdAt": "2025-08-20T10:00:00Z"
+  }
+}
+```
+
+### 2️⃣7️⃣ Get All Menus (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus?page=1&limit=20`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Query Parameters (ทั้งหมดเป็น optional):
+
+| Parameter    | Description              | Example     |
+| ------------ | ------------------------ | ----------- |
+| `categoryId` | กรองตามหมวดหมู่           | `1`         |
+| `keyword`    | ค้นหาตามชื่อเมนู          | `ข้าวผัด`    |
+| `status`     | กรองตามสถานะ (`true`/`false`) | `true`  |
+| `page`       | หน้าที่ (default: 1)      | `1`         |
+| `limit`      | จำนวนต่อหน้า (default: 20) | `20`        |
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการเมนูสำเร็จ",
+  "data": {
+    "items": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+### 2️⃣8️⃣ Get Menu By ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้ง",
+    "categoryId": 1,
+    "price": 89.00,
+    "description": "ข้าวผัดกุ้งสด",
+    "menuStatus": true
+  }
+}
+```
+
+### 2️⃣9️⃣ Update Menu (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ข้าวผัดกุ้งพิเศษ",
+  "price": 99.00,
+  "description": "เพิ่มกุ้ง"
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuName": "ข้าวผัดกุ้งพิเศษ",
+    "price": 99.00,
+    "description": "เพิ่มกุ้ง"
+  }
+}
+```
+
+### 3️⃣0️⃣ Update Menu Status (ADMIN)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/101/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตสถานะเมนูสำเร็จ",
+  "data": {
+    "menuId": 101,
+    "menuStatus": false
+  }
+}
+```
+
+### 3️⃣1️⃣ Logout
 
 Method: `POST`  
 URL: `{{baseUrl}}/api/v1/auth/logout`  
@@ -1134,6 +1324,174 @@ Expected Response (409):
 }
 ```
 
+### W) Create Menu category ไม่พบ
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/menus`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "categoryId": 99999,
+  "price": 50.00,
+  "description": "ทดสอบ",
+  "menuStatus": true
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบหมวดหมู่"
+}
+```
+
+### X) Create Menu ชื่อซ้ำ
+
+สร้างเมนูด้วยชื่อเดิมซ้ำอีกครั้ง
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
+### Y) Get Menu By ID ไม่พบ
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### Z) Update Menu ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuName": "ทดสอบ",
+  "price": 50.00,
+  "description": "ทดสอบ"
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### AA) Update Menu ชื่อซ้ำ
+
+แก้ไขชื่อเมนูเป็นชื่อที่มีอยู่แล้ว
+
+Expected Response (409):
+
+```json
+{
+  "success": false,
+  "message": "ชื่อเมนูซ้ำ"
+}
+```
+
+### AB) Update Menu Status ไม่พบ
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/menus/99999/status`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "menuStatus": false
+}
+```
+
+Expected Response (404):
+
+```json
+{
+  "success": false,
+  "message": "ไม่พบเมนู"
+}
+```
+
+### AC) Customer Menus ไม่ส่ง qrToken
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/customer/menus`  
+Headers: None
+
+Expected Response (400):
+
+```json
+{
+  "success": false,
+  "message": "กรุณาระบุ qrToken"
+}
+```
+
+### AD) Customer Menus QR หมดอายุ
+
+ใช้ qrToken ที่หมดอายุแล้ว
+
+Expected Response (410):
+
+```json
+{
+  "success": false,
+  "message": "QR หมดอายุ"
+}
+```
+
+### AE) Customer Menus session ปิดแล้ว
+
+ใช้ qrToken ของ session ที่ปิดแล้ว
+
+Expected Response (422):
+
+```json
+{
+  "success": false,
+  "message": "session ปิดแล้ว"
+}
+```
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -1161,6 +1519,11 @@ Expected Response (409):
 - `POST /api/v1/categories`
 - `GET /api/v1/categories`
 - `PATCH /api/v1/categories/:categoryId`
+- `POST /api/v1/menus`
+- `GET /api/v1/menus`
+- `GET /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId`
+- `PATCH /api/v1/menus/:menuId/status`
 
 ## คำสั่งช่วยตรวจสถานะ
 
