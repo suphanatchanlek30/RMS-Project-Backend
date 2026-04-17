@@ -55,6 +55,59 @@ WHERE email = 'chef@rms.com';
 - `cashierPassword` = `Cashier1234!`
 - `cashierToken` = (ค่าว่างไว้ก่อน)
 
+## วิธีเทส Customer Menus ผ่าน QR Token
+
+ถ้าต้องการเทสเส้น `GET /api/v1/customer/menus` ให้ทำตามลำดับนี้
+
+1. ล็อกอินด้วยบัญชี `cashier` เพื่อเอา `cashierToken`
+2. เปิดโต๊ะด้วย `POST /api/v1/table-sessions/open`
+3. สร้าง QR Session ด้วย `POST /api/v1/qr-sessions`
+4. เอา `qrToken` จาก response ที่ได้
+5. เรียก `GET /api/v1/customer/menus?qrToken={{qrToken}}`
+
+ตัวอย่าง request ของเส้น customer menus
+
+```http
+GET {{baseUrl}}/api/v1/customer/menus?qrToken={{qrToken}}
+Authorization: None
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงเมนูสำหรับลูกค้าสำเร็จ",
+  "data": {
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "categories": [
+      {
+        "categoryId": 1,
+        "categoryName": "อาหารจานหลัก"
+      }
+    ],
+    "menus": [
+      {
+        "menuId": 101,
+        "menuName": "ข้าวผัดกุ้ง",
+        "price": 89.00,
+        "description": "ข้าวผัดกุ้งสด",
+        "menuStatus": true
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่ส่ง `qrToken` -> `400 กรุณาระบุ qrToken`
+- ใช้ `qrToken` ที่หมดอายุ -> `410 QR หมดอายุ`
+- ใช้ `qrToken` ของ session ที่ปิดแล้ว -> `422 session ปิดแล้ว`
+
 ## ขั้นตอนการใช้งาน (ทดสอบลำดับนี้)
 
 ### 1️⃣ Health Check
