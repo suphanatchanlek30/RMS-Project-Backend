@@ -10,6 +10,7 @@
 - API จัดการพนักงาน (สร้าง, ค้นหา, แก้ไข, ปิด/เปิดใช้งาน)
 - API จัดการโต๊ะ (ดูรายการ, ดูรายตัว, สร้าง, แก้ไข)
 - API เมนูสำหรับลูกค้า
+- API คำสั่งซื้อของลูกค้าผ่าน QR และคำสั่งซื้อของ cashier
 - SQL seed สำหรับสร้าง schema และข้อมูลตั้งต้น
 - รองรับการรันแบบ Docker ทั้งระบบ หรือรัน Go local + DB ใน Docker
 
@@ -41,6 +42,7 @@ internal/
     table_handler.go
     table_session_handler.go
     qr_session_handler.go
+    order_handler.go
     category_handler.go
   middleware/
     auth_middleware.go
@@ -53,6 +55,7 @@ internal/
     table.go
     table_session.go
     qr_session.go
+    order.go
     category.go
   repositories/
     auth_repository.go
@@ -62,6 +65,7 @@ internal/
     table_repository.go
     table_session_repository.go
     qr_session_repository.go
+    order_repository.go
     category_repository.go
   routes/
     routes.go
@@ -73,6 +77,7 @@ internal/
     table_service.go
     table_session_service.go
     qr_session_service.go
+    order_service.go
     category_service.go
   utils/
     jwt.go
@@ -198,6 +203,8 @@ docker compose up --build -d
 
 - `GET /health`
 - `GET /api/v1/customer/menus?qrToken=xxx`
+- `GET /api/v1/customer/orders?qrToken=xxx`
+- `POST /api/v1/customer/orders`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/qr/:token`
 - `GET /api/v1/categories`
@@ -223,6 +230,8 @@ docker compose up --build -d
 - `PATCH /api/v1/menus/:menuId`
 - `PATCH /api/v1/menus/:menuId/status`
 
+### ADMIN หรือ CASHIER
+
 - `GET /api/v1/tables`
 - `GET /api/v1/tables/:tableId`
 - `GET /api/v1/tables/:tableId/current-session`
@@ -230,18 +239,18 @@ docker compose up --build -d
 - `GET /api/v1/qr-sessions/:qrSessionId`
 - `GET /api/v1/menus`
 - `GET /api/v1/menus/:menuId`
+- `GET /api/v1/table-sessions/:sessionId/orders`
+
+### ADMIN, CASHIER หรือ CHEF
+
+- `GET /api/v1/orders/:orderId`
 
 ### CASHIER เท่านั้น
 
 - `POST /api/v1/table-sessions/open`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
-
-## บัญชีสำหรับทดสอบ (จาก seed)
-
-- ADMIN: `admin@rms.com`
-- CASHIER: `cashier@rms.com`
-- CHEF: `chef@rms.com`
+- `POST /api/v1/orders`
 
 หมายเหตุ: ต้องตั้ง `password_hash` ให้บัญชี seed ก่อนตามขั้นตอนใน [README_API_TEST.md](README_API_TEST.md)
 

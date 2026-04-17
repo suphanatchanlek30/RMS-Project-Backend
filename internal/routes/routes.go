@@ -41,6 +41,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	menuService := services.NewMenuService(menuRepo, qrSessionRepo)
 	menuHandler := handlers.NewMenuHandler(menuService)
 
+	orderRepo := repositories.NewOrderRepository(db)
+	orderService := services.NewOrderService(orderRepo, qrSessionRepo, tableSessionRepo, tableRepo, menuRepo)
+	orderHandler := handlers.NewOrderHandler(orderService)
+
 	categoryRepo := repositories.NewCategoryRepository(db)
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
@@ -77,6 +81,12 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Post("/qr-sessions", middleware.Protected(), middleware.CashierOnly(), qrSessionHandler.CreateQRSession)
 	v1.Get("/qr-sessions/:qrSessionId", middleware.Protected(), middleware.AdminOrCashier(), qrSessionHandler.GetByID)
 	v1.Get("/qr/:token", qrSessionHandler.VerifyQR)
+
+	v1.Post("/customer/orders", orderHandler.CreateCustomerOrder)
+	v1.Get("/customer/orders", orderHandler.GetCustomerOrders)
+	v1.Post("/orders", middleware.Protected(), middleware.CashierOnly(), orderHandler.CreateOrder)
+	v1.Get("/orders/:orderId", middleware.Protected(), middleware.AdminCashierChef(), orderHandler.GetByID)
+	v1.Get("/table-sessions/:sessionId/orders", middleware.Protected(), middleware.AdminOrCashier(), orderHandler.GetBySessionID)
 
 	v1.Post("/categories", middleware.Protected(), middleware.AdminOnly(), categoryHandler.Create)
 	v1.Get("/categories", categoryHandler.GetAll)
