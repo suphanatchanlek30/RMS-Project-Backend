@@ -47,3 +47,8 @@ type PaymentListFilter struct {
 	Page            int
 	Limit           int
 }
+
+type PaymentMethodItem struct {
+	PaymentMethodID int    `json:"paymentMethodId"`
+	MethodName      string `json:"methodName"`
+}

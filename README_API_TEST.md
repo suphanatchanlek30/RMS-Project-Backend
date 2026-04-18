@@ -1700,6 +1700,40 @@ Expected Response (200):
 - ไม่มี token -> `401`
 - token ไม่ใช่ ADMIN -> `403`
 
+### 4️⃣8️⃣ Get All Payment Methods (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payment-methods`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงวิธีชำระเงินสำเร็จ",
+  "data": [
+    {
+      "paymentMethodId": 1,
+      "methodName": "CASH"
+    },
+    {
+      "paymentMethodId": 2,
+      "methodName": "QR"
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่มี token -> `401`
+- token ไม่ใช่ ADMIN หรือ CASHIER -> `403`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -2230,6 +2264,7 @@ Expected Response (422):
 - `POST /api/v1/payments`
 - `GET /api/v1/payments/:paymentId`
 - `GET /api/v1/payments`
+- `GET /api/v1/payment-methods`
 
 ## คำสั่งช่วยตรวจสถานะ
 
