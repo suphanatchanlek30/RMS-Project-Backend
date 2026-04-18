@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 )
@@ -223,4 +225,49 @@ func (r *OrderRepository) GetBySessionID(ctx context.Context, sessionID int) ([]
 	}
 
 	return records, nil
+}
+
+func (r *OrderRepository) GetOrderItemsByOrderID(ctx context.Context, orderID int) ([]models.OrderItemResponse, error) {
+	query := `
+		SELECT 
+			oi.order_item_id,
+			oi.menu_id,
+			m.menu_name,
+			oi.quantity,
+			oi.unit_price,
+			oi.item_status
+		FROM order_items oi
+		JOIN menus m ON oi.menu_id = m.menu_id
+		WHERE oi.order_id = $1;
+	`
+
+	rows, err := r.DB.Query(ctx, query, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []models.OrderItemResponse
+
+	for rows.Next() {
+		var item models.OrderItemResponse
+		err := rows.Scan(
+			&item.OrderItemID,
+			&item.MenuID,
+			&item.MenuName,
+			&item.Quantity,
+			&item.UnitPrice,
+			&item.ItemStatus,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if len(items) == 0 {
+		return nil, pgx.ErrNoRows
+	}
+
+	return items, nil
 }

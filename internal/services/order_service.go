@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"time"
 
@@ -276,4 +279,16 @@ func toSessionOrderSummaries(records []models.OrderRecord) []models.SessionOrder
 	}
 
 	return result
+}
+
+func (s *OrderService) GetOrderItems(ctx context.Context, orderID int) ([]models.OrderItemResponse, error) {
+	items, err := s.repo.GetOrderItemsByOrderID(ctx, orderID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("order not found")
+		}
+		return nil, err
+	}
+
+	return items, nil
 }

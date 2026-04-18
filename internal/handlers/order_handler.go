@@ -148,3 +148,36 @@ func (h *OrderHandler) GetBySessionID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(models.APIResponse{Success: true, Message: "ดึงรายการ order ของโต๊ะสำเร็จ", Data: resp})
 }
+
+func (h *OrderHandler) GetOrderItems(c *fiber.Ctx) error {
+	orderIDParam := c.Params("orderId")
+
+	orderID, err := strconv.Atoi(orderIDParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "orderId ไม่ถูกต้อง",
+		})
+	}
+
+	items, err := h.service.GetOrderItems(c.Context(), orderID)
+	if err != nil {
+		if err.Error() == "order not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": "ไม่พบ order",
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "เกิดข้อผิดพลาด",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "ดึงรายการอาหารสำเร็จ",
+		"data":    items,
+	})
+}
