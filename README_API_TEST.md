@@ -1253,6 +1253,273 @@ Expected Response (200):
 - `qrToken` หมดอายุ -> `410 QR หมดอายุ`
 - `session` ปิดแล้ว หรือเมนูปิดขาย -> `422 เมนูปิดขาย/โต๊ะไม่พร้อมใช้งาน`
 
+### 3️⃣7️⃣ Get Order Items (ADMIN/CASHIER/CHEF)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/orders/9001/items`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Query Parameters: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการอาหารสำเร็จ",
+  "data": [
+    {
+      "orderItemId": 1,
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "quantity": 2,
+      "unitPrice": 89,
+      "itemStatus": "WAITING"
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `orderId` ไม่ถูกต้อง -> `400 orderId ไม่ถูกต้อง`
+- ไม่พบ order -> `404 ไม่พบ order`
+
+### 3️⃣8️⃣ Update Order Item Quantity (CASHIER)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/order-items/1`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "quantity": 3
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "แก้ไขจำนวนรายการอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "quantity": 3
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `orderItemId` ไม่ถูกต้อง -> `400 orderItemId ไม่ถูกต้อง`
+- `quantity` ไม่ถูกต้องหรือไม่ส่งมา -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบรายการอาหาร -> `404 ไม่พบ order item`
+- สถานะไม่อนุญาตให้แก้ -> `422 สถานะไม่อนุญาตให้แก้`
+
+### 3️⃣9️⃣ Cancel Order Item (CASHIER)
+
+Method: `DELETE`  
+URL: `{{baseUrl}}/api/v1/order-items/1`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ยกเลิกรายการอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "itemStatus": "CANCELLED"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `orderItemId` ไม่ถูกต้อง -> `400 orderItemId ไม่ถูกต้อง`
+- ไม่พบรายการอาหาร -> `404 ไม่พบรายการอาหาร`
+- รายการถูกทำแล้วหรือชำระแล้ว -> `422 รายการถูกทำแล้วหรือชำระแล้ว`
+
+### 4️⃣0️⃣ Kitchen Orders (CHEF)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/kitchen/orders?status=WAITING&page=1&limit=10`  
+Headers:
+
+- `Authorization: Bearer {{chefToken}}`
+
+Body: None
+
+Query Parameters (optional):
+
+- `status` = กรองตามสถานะอาหาร เช่น `WAITING`, `PREPARING`, `COMPLETED`
+- `tableId` = กรองตามโต๊ะ
+- `page` = หน้าที่ (default: 1)
+- `limit` = จำนวนต่อหน้า (default: 10)
+
+หมายเหตุ: ถ้าไม่ส่ง `status` ระบบจะดึงเฉพาะรายการที่อยู่ใน `WAITING` และ `PREPARING`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงคิวครัวสำเร็จ",
+  "data": [
+    {
+      "orderId": 9001,
+      "tableId": 1,
+      "tableNumber": "A01",
+      "orderTime": "2025-08-20T12:10:00Z",
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "itemStatus": "WAITING"
+        }
+      ]
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่มี token หรือ token ไม่ใช่ CHEF -> `401/403` จาก middleware
+
+### 4️⃣1️⃣ Update Order Item Status (CHEF)
+
+Method: `PATCH`  
+URL: `{{baseUrl}}/api/v1/order-items/1/status`  
+Headers:
+
+- `Authorization: Bearer {{chefToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "status": "PREPARING",
+  "updatedByChefId": 21
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตสถานะอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "oldStatus": "WAITING",
+    "newStatus": "PREPARING",
+    "updatedTime": "2025-08-20T12:20:00Z"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ส่ง body ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่มี employeeId ใน token -> `401 token ไม่ถูกต้อง`
+- ไม่พบ order item หรือสถานะไม่ถูกลำดับ -> `422 order item not found` หรือ `422 สถานะไม่ถูกต้องตามลำดับ`
+
+### 4️⃣2️⃣ Get Order Item Status History (ADMIN/CASHIER/CHEF)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/order-items/1/history`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงประวัติสถานะสำเร็จ",
+  "data": [
+    {
+      "statusHistoryId": 1,
+      "status": "WAITING",
+      "updatedByChefId": null,
+      "updatedTime": "2025-08-20T12:10:00Z"
+    },
+    {
+      "statusHistoryId": 2,
+      "status": "PREPARING",
+      "updatedByChefId": 21,
+      "updatedTime": "2025-08-20T12:20:00Z"
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่พบข้อมูล -> `404 ไม่พบข้อมูล`
+
+### 4️⃣3️⃣ Customer Order Status (Public)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/customer/order-status?qrToken={{qrToken}}`  
+Headers: None  
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงสถานะออเดอร์สำเร็จ",
+  "data": {
+    "tableId": 1,
+    "tableNumber": "A01",
+    "orders": [
+      {
+        "orderId": 9001,
+        "orderTime": "2025-08-20T12:10:00Z",
+        "items": [
+          {
+            "orderItemId": 1,
+            "menuName": "ข้าวผัดกุ้ง",
+            "quantity": 2,
+            "itemStatus": "PREPARING"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่ส่ง `qrToken` -> `400 qrToken จำเป็น`
+- ไม่พบ QR หรือคำสั่งซื้อ -> `404 ไม่พบ QR หรือคำสั่งซื้อ`
+- QR หมดอายุ -> `410 QR หมดอายุ`
+- session ปิดแล้ว -> `422 session ปิดแล้ว`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -1747,6 +2014,7 @@ Expected Response (422):
 - `GET /api/v1/auth/me`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/customer/menus`
+- `GET /api/v1/customer/order-status`
 - `GET /api/v1/roles`
 - `POST /api/v1/employees`
 - `GET /api/v1/employees`
@@ -1772,6 +2040,12 @@ Expected Response (422):
 - `GET /api/v1/menus/:menuId`
 - `PATCH /api/v1/menus/:menuId`
 - `PATCH /api/v1/menus/:menuId/status`
+- `GET /api/v1/orders/:orderId/items`
+- `PATCH /api/v1/order-items/:orderItemId`
+- `DELETE /api/v1/order-items/:orderItemId`
+- `GET /api/v1/kitchen/orders`
+- `PATCH /api/v1/order-items/:orderItemId/status`
+- `GET /api/v1/order-items/:orderItemId/history`
 
 ## คำสั่งช่วยตรวจสถานะ
 
