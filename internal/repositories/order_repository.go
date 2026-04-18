@@ -63,6 +63,18 @@ func (r *OrderRepository) CreateOrder(ctx context.Context, sessionID int, tableI
 			return nil, fmt.Errorf("INTERNAL")
 		}
 
+		_, err = tx.Exec(ctx,
+			`INSERT INTO order_status_history 
+		    (order_item_id, status, updated_by_chef_id)
+		    VALUES ($1, $2, $3)`,
+			orderItem.OrderItemID,
+			"WAITING",
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("INTERNAL")
+		}
+
 		orderItem.MenuID = item.MenuID
 		orderItem.MenuName = item.MenuName
 		orderItem.Quantity = item.Quantity
