@@ -54,8 +54,12 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	kitchenHandler := handlers.NewKitchenHandler(kitchenService)
 
 	paymentRepo := repositories.NewPaymentRepository(db)
-	paymentService := services.NewPaymentService(paymentRepo, tableSessionRepo)
+	receiptRepo := repositories.NewReceiptRepository(db)
+	paymentService := services.NewPaymentService(paymentRepo, tableSessionRepo, receiptRepo)
 	paymentHandler := handlers.NewPaymentHandler(paymentService)
+
+	receiptService := services.NewReceiptService(receiptRepo, paymentRepo)
+	receiptHandler := handlers.NewReceiptHandler(receiptService)
 
 	paymentMethodRepo := repositories.NewPaymentMethodRepository(db)
 	paymentMethodService := services.NewPaymentMethodService(paymentMethodRepo)
@@ -124,4 +128,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/payments/:paymentId", middleware.Protected(), middleware.AdminOrCashier(), paymentHandler.GetByID)
 	v1.Get("/payments", middleware.Protected(), middleware.AdminOnly(), paymentHandler.GetAll)
 	v1.Get("/payment-methods", middleware.Protected(), middleware.AdminOrCashier(), paymentMethodHandler.GetAll)
+	v1.Get("/payments/:paymentId/receipt", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByPaymentID)
+	v1.Get("/receipts/:receiptId", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByReceiptID)
 }

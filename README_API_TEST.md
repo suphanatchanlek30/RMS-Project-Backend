@@ -1734,6 +1734,112 @@ Expected Response (200):
 - ไม่มี token -> `401`
 - token ไม่ใช่ ADMIN หรือ CASHIER -> `403`
 
+### 4️⃣9️⃣ Get Receipt By Payment ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments/3001/receipt`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลใบเสร็จสำเร็จ",
+  "data": {
+    "receiptId": 4001,
+    "receiptNumber": "RCT-20250820-0001",
+    "issueDate": "2025-08-20T13:20:10Z",
+    "totalAmount": 193,
+    "payment": {
+      "paymentId": 3001,
+      "paymentMethodName": "CASH",
+      "paymentTime": "2025-08-20T13:20:00Z"
+    },
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "items": [
+      {
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `paymentId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ receipt หรือ payment -> `404 ไม่พบ receipt หรือ payment`
+
+### 5️⃣0️⃣ Get Receipt By Receipt ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/receipts/4001`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลใบเสร็จสำเร็จ",
+  "data": {
+    "receiptId": 4001,
+    "receiptNumber": "RCT-20250820-0001",
+    "issueDate": "2025-08-20T13:20:10Z",
+    "totalAmount": 193,
+    "payment": {
+      "paymentId": 3001,
+      "paymentMethodName": "CASH",
+      "paymentTime": "2025-08-20T13:20:00Z"
+    },
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "items": [
+      {
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `receiptId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ receipt -> `404 ไม่พบ receipt`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -2265,6 +2371,8 @@ Expected Response (422):
 - `GET /api/v1/payments/:paymentId`
 - `GET /api/v1/payments`
 - `GET /api/v1/payment-methods`
+- `GET /api/v1/payments/:paymentId/receipt`
+- `GET /api/v1/receipts/:receiptId`
 
 ## คำสั่งช่วยตรวจสถานะ
 

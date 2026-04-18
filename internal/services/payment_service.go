@@ -11,10 +11,11 @@ import (
 type PaymentService struct {
 	paymentRepo      *repositories.PaymentRepository
 	tableSessionRepo *repositories.TableSessionRepository
+	receiptRepo      *repositories.ReceiptRepository
 }
 
-func NewPaymentService(paymentRepo *repositories.PaymentRepository, tableSessionRepo *repositories.TableSessionRepository) *PaymentService {
-	return &PaymentService{paymentRepo: paymentRepo, tableSessionRepo: tableSessionRepo}
+func NewPaymentService(paymentRepo *repositories.PaymentRepository, tableSessionRepo *repositories.TableSessionRepository, receiptRepo *repositories.ReceiptRepository) *PaymentService {
+	return &PaymentService{paymentRepo: paymentRepo, tableSessionRepo: tableSessionRepo, receiptRepo: receiptRepo}
 }
 
 func (s *PaymentService) Create(ctx context.Context, req models.CreatePaymentRequest) (*models.CreatePaymentResponse, error) {
@@ -74,6 +75,10 @@ func (s *PaymentService) Create(ctx context.Context, req models.CreatePaymentReq
 		req.ReceivedAmount,
 	)
 	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	if err := s.receiptRepo.CreateForPayment(ctx, resp.PaymentID, resp.TotalAmount); err != nil {
 		return nil, fmt.Errorf("INTERNAL")
 	}
 
