@@ -55,3 +55,8 @@ INSERT INTO menu_ingredients (menu_id, ingredient_id, quantity_used) VALUES
 (4, 5, 1),
 (4, 6, 1)
 ON CONFLICT (menu_id, ingredient_id) DO NOTHING;
+
+INSERT INTO payment_methods (method_name) VALUES
+('CASH'),
+('QR')
+ON CONFLICT (method_name) DO NOTHING;

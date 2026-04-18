@@ -1570,6 +1570,136 @@ Expected Response (200):
 - ไม่พบ session -> `404 ไม่พบ session`
 - session ไม่พร้อมคิดเงิน -> `422 session ไม่พร้อมคิดเงิน`
 
+### 4️⃣5️⃣ Create Payment (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/payments`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1001,
+  "paymentMethodId": 1,
+  "receivedAmount": 200
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "ชำระเงินสำเร็จ",
+  "data": {
+    "paymentId": 3001,
+    "sessionId": 1001,
+    "paymentMethodId": 1,
+    "paymentMethodName": "CASH",
+    "totalAmount": 193,
+    "receivedAmount": 200,
+    "changeAmount": 7,
+    "paymentTime": "2025-08-20T13:20:00Z",
+    "paymentStatus": "PAID"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- body ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ session -> `404 ไม่พบ session`
+- ไม่พบ payment method -> `404 ไม่พบ payment method`
+- จ่ายซ้ำ session เดิม -> `409 จ่ายแล้ว`
+- receivedAmount ไม่พอ -> `422 receivedAmount ไม่พอ`
+
+### 4️⃣6️⃣ Get Payment By ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments/3001`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลการชำระเงินสำเร็จ",
+  "data": {
+    "paymentId": 3001,
+    "sessionId": 1001,
+    "paymentMethodId": 1,
+    "paymentMethodName": "CASH",
+    "totalAmount": 193,
+    "paymentTime": "2025-08-20T13:20:00Z",
+    "paymentStatus": "PAID"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `paymentId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ payment -> `404 ไม่พบ payment`
+
+### 4️⃣7️⃣ Get All Payments (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments?dateFrom=2025-08-01T00:00:00Z&dateTo=2025-08-31T23:59:59Z&paymentMethodId=1&status=PAID&page=1&limit=20`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Query Parameters (ทั้งหมดเป็น optional):
+
+- `dateFrom` = วันเวลาเริ่มต้นของช่วงค้นหา
+- `dateTo` = วันเวลาสิ้นสุดของช่วงค้นหา
+- `paymentMethodId` = กรองตามวิธีการชำระ
+- `status` = กรองตามสถานะการชำระ เช่น `PAID`
+- `page` = หน้าที่ (default: 1)
+- `limit` = จำนวนต่อหน้า (default: 20)
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการการชำระเงินสำเร็จ",
+  "data": {
+    "items": [
+      {
+        "paymentId": 3001,
+        "sessionId": 1001,
+        "paymentMethodName": "CASH",
+        "totalAmount": 193,
+        "paymentStatus": "PAID",
+        "paymentTime": "2025-08-20T13:20:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่มี token -> `401`
+- token ไม่ใช่ ADMIN -> `403`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -2097,6 +2227,9 @@ Expected Response (422):
 - `GET /api/v1/kitchen/orders`
 - `PATCH /api/v1/order-items/:orderItemId/status`
 - `GET /api/v1/order-items/:orderItemId/history`
+- `POST /api/v1/payments`
+- `GET /api/v1/payments/:paymentId`
+- `GET /api/v1/payments`
 
 ## คำสั่งช่วยตรวจสถานะ
 

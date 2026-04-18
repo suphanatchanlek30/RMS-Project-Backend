@@ -53,6 +53,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	kitchenService := services.NewKitchenService(kitchenRepo)
 	kitchenHandler := handlers.NewKitchenHandler(kitchenService)
 
+	paymentRepo := repositories.NewPaymentRepository(db)
+	paymentService := services.NewPaymentService(paymentRepo, tableSessionRepo)
+	paymentHandler := handlers.NewPaymentHandler(paymentService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -111,4 +115,8 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Patch("/order-items/:orderItemId/status", middleware.Protected(), middleware.ChefOnly(), orderHandler.UpdateOrderItemStatus)
 	v1.Get("/order-items/:orderItemId/history", middleware.Protected(), middleware.AdminCashierChef(), orderHandler.GetOrderItemStatusHistory)
 	v1.Get("/customer/order-status", orderHandler.GetCustomerOrderStatus)
+
+	v1.Post("/payments", middleware.Protected(), middleware.CashierOnly(), paymentHandler.Create)
+	v1.Get("/payments/:paymentId", middleware.Protected(), middleware.AdminOrCashier(), paymentHandler.GetByID)
+	v1.Get("/payments", middleware.Protected(), middleware.AdminOnly(), paymentHandler.GetAll)
 }
