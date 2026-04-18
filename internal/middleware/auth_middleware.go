@@ -138,3 +138,26 @@ func AdminCashierChef() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func ChefOnly() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		roleName, ok := c.Locals("roleName").(string)
+		if !ok || roleName == "" {
+			return c.Status(fiber.StatusForbidden).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่มีสิทธิ์เข้าถึง",
+				Data:    nil,
+			})
+		}
+
+		if strings.ToUpper(roleName) != "CHEF" {
+			return c.Status(fiber.StatusForbidden).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่มีสิทธิ์เข้าถึง",
+				Data:    nil,
+			})
+		}
+
+		return c.Next()
+	}
+}

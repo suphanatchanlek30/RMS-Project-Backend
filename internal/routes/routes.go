@@ -49,6 +49,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
+	kitchenRepo := repositories.NewKitchenRepository(db)
+	kitchenService := services.NewKitchenService(kitchenRepo)
+	kitchenHandler := handlers.NewKitchenHandler(kitchenService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -102,4 +106,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Patch("/order-items/:orderItemId", middleware.Protected(), middleware.CashierOnly(), orderHandler.UpdateOrderItemQuantity)
 	v1.Delete("/order-items/:orderItemId", middleware.Protected(), middleware.CashierOnly(), orderHandler.CancelOrderItem)
 
+	v1.Get("/kitchen/orders", middleware.Protected(), middleware.ChefOnly(), kitchenHandler.GetKitchenOrders)
 }
