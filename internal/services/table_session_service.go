@@ -89,3 +89,32 @@ func (s *TableSessionService) CloseSession(ctx context.Context, sessionID int) (
 
 	return resp, nil
 }
+
+func (s *TableSessionService) GetSessionBill(ctx context.Context, sessionID int) (*models.SessionBillResponse, error) {
+	session, err := s.repo.GetSessionByID(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("NOT_FOUND")
+	}
+
+	if session.SessionStatus == "OPEN" {
+		return nil, fmt.Errorf("UNPROCESSABLE")
+	}
+
+	hasUnbillable, err := s.repo.HasUnbillableItems(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	if hasUnbillable {
+		return nil, fmt.Errorf("UNPROCESSABLE")
+	}
+
+	bill, err := s.repo.GetSessionBill(ctx, sessionID)
+	if err != nil {
+		if err.Error() == "NO_ITEMS" {
+			return nil, fmt.Errorf("UNPROCESSABLE")
+		}
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return bill, nil
+}

@@ -1520,6 +1520,56 @@ Expected Response (200):
 - QR หมดอายุ -> `410 QR หมดอายุ`
 - session ปิดแล้ว -> `422 session ปิดแล้ว`
 
+### 4️⃣4️⃣ Get Session Bill (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1001/bill`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "คำนวณบิลสำเร็จ",
+  "data": {
+    "sessionId": 1001,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "items": [
+      {
+        "orderItemId": 1,
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "orderItemId": 2,
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ],
+    "subtotal": 193,
+    "serviceCharge": 0,
+    "vat": 0,
+    "totalAmount": 193
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `sessionId` ไม่ถูกต้อง -> `400 sessionId ไม่ถูกต้อง`
+- ไม่พบ session -> `404 ไม่พบ session`
+- session ไม่พร้อมคิดเงิน -> `422 session ไม่พร้อมคิดเงิน`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -2027,6 +2077,7 @@ Expected Response (422):
 - `PATCH /api/v1/tables/:tableId`
 - `POST /api/v1/table-sessions/open`
 - `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/table-sessions/:sessionId/bill`
 - `GET /api/v1/tables/:tableId/current-session`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
