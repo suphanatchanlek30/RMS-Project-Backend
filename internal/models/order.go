@@ -102,3 +102,8 @@ type OrderItemQuantityResponse struct {
 	OrderItemID int `json:"orderItemId"`
 	Quantity    int `json:"quantity"`
 }
+
+type OrderItemStatusResponse struct {
+	OrderItemID int    `json:"orderItemId"`
+	ItemStatus  string `json:"itemStatus"`
+}

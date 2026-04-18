@@ -306,3 +306,17 @@ func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID 
 
 	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
 }
+
+func (s *OrderService) CancelOrderItem(ctx context.Context, orderItemID int) (*models.OrderItemStatusResponse, error) {
+
+	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if item.ItemStatus != "WAITING" {
+		return nil, errors.New("invalid status")
+	}
+
+	return s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED")
+}

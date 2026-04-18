@@ -228,3 +228,42 @@ func (h *OrderHandler) UpdateOrderItemQuantity(c *fiber.Ctx) error {
 		"data":    result,
 	})
 }
+
+func (h *OrderHandler) CancelOrderItem(c *fiber.Ctx) error {
+	idParam := c.Params("orderItemId")
+
+	orderItemID, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "orderItemId ไม่ถูกต้อง",
+		})
+	}
+
+	result, err := h.service.CancelOrderItem(c.Context(), orderItemID)
+	if err != nil {
+		if err.Error() == "not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": "ไม่พบรายการอาหาร",
+			})
+		}
+		if err.Error() == "invalid status" {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"success": false,
+				"message": "รายการถูกทำแล้วหรือชำระแล้ว",
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "เกิดข้อผิดพลาด",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "ยกเลิกรายการอาหารสำเร็จ",
+		"data":    result,
+	})
+}

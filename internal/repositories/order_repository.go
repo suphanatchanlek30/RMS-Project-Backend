@@ -319,3 +319,25 @@ func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, q
 
 	return &res, nil
 }
+
+func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, id int, status string) (*models.OrderItemStatusResponse, error) {
+	query := `
+		UPDATE order_items
+		SET item_status = $1
+		WHERE order_item_id = $2
+		RETURNING order_item_id, item_status
+	`
+
+	var res models.OrderItemStatusResponse
+
+	err := r.DB.QueryRow(ctx, query, status, id).Scan(
+		&res.OrderItemID,
+		&res.ItemStatus,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
