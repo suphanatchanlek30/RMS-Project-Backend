@@ -91,13 +91,8 @@ func (s *TableSessionService) CloseSession(ctx context.Context, sessionID int) (
 }
 
 func (s *TableSessionService) GetSessionBill(ctx context.Context, sessionID int) (*models.SessionBillResponse, error) {
-	session, err := s.repo.GetSessionByID(ctx, sessionID)
-	if err != nil {
+	if _, err := s.repo.GetSessionByID(ctx, sessionID); err != nil {
 		return nil, fmt.Errorf("NOT_FOUND")
-	}
-
-	if session.SessionStatus == "OPEN" {
-		return nil, fmt.Errorf("UNPROCESSABLE")
 	}
 
 	hasUnbillable, err := s.repo.HasUnbillableItems(ctx, sessionID)

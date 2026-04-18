@@ -171,8 +171,11 @@ func (r *TableSessionRepository) GetSessionByID(ctx context.Context, sessionID i
 func (r *TableSessionRepository) HasPendingOrders(ctx context.Context, sessionID int) (bool, error) {
 	query := `
 		SELECT EXISTS(
-			SELECT 1 FROM customer_orders
-			WHERE session_id = $1 AND order_status IN ('PENDING', 'PREPARING')
+			SELECT 1
+			FROM customer_orders co
+			JOIN order_items oi ON oi.order_id = co.order_id
+			WHERE co.session_id = $1
+			  AND oi.item_status IN ('WAITING', 'PREPARING')
 		)
 	`
 
