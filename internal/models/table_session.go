@@ -47,3 +47,22 @@ type CloseSessionResponse struct {
 	TableID       int       `json:"tableId"`
 	TableStatus   string    `json:"tableStatus"`
 }
+
+type BillItemResponse struct {
+	OrderItemID int     `json:"orderItemId"`
+	MenuName    string  `json:"menuName"`
+	Quantity    int     `json:"quantity"`
+	UnitPrice   float64 `json:"unitPrice"`
+	LineTotal   float64 `json:"lineTotal"`
+}
+
+type SessionBillResponse struct {
+	SessionID     int                `json:"sessionId"`
+	TableID       int                `json:"tableId"`
+	TableNumber   string             `json:"tableNumber"`
+	Items         []BillItemResponse `json:"items"`
+	Subtotal      float64            `json:"subtotal"`
+	ServiceCharge float64            `json:"serviceCharge"`
+	VAT           float64            `json:"vat"`
+	TotalAmount   float64            `json:"totalAmount"`
+}

@@ -171,8 +171,11 @@ func (r *TableSessionRepository) GetSessionByID(ctx context.Context, sessionID i
 func (r *TableSessionRepository) HasPendingOrders(ctx context.Context, sessionID int) (bool, error) {
 	query := `
 		SELECT EXISTS(
-			SELECT 1 FROM customer_orders
-			WHERE session_id = $1 AND order_status IN ('PENDING', 'PREPARING')
+			SELECT 1
+			FROM customer_orders co
+			JOIN order_items oi ON oi.order_id = co.order_id
+			WHERE co.session_id = $1
+			  AND oi.item_status IN ('WAITING', 'PREPARING')
 		)
 	`
 
@@ -229,4 +232,99 @@ func (r *TableSessionRepository) CloseSession(ctx context.Context, sessionID int
 	}
 
 	return &resp, nil
+}
+
+func (r *TableSessionRepository) HasUnbillableItems(ctx context.Context, sessionID int) (bool, error) {
+	query := `
+		SELECT EXISTS(
+			SELECT 1
+			FROM customer_orders co
+			JOIN order_items oi ON oi.order_id = co.order_id
+			WHERE co.session_id = $1
+			  AND oi.item_status IN ('WAITING', 'PREPARING')
+		)
+	`
+
+	var exists bool
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (r *TableSessionRepository) GetSessionBill(ctx context.Context, sessionID int) (*models.SessionBillResponse, error) {
+	infoQuery := `
+		SELECT ts.session_id, ts.table_id, rt.table_number
+		FROM table_sessions ts
+		JOIN restaurant_tables rt ON rt.table_id = ts.table_id
+		WHERE ts.session_id = $1
+	`
+
+	resp := &models.SessionBillResponse{}
+	err := r.DB.QueryRow(ctx, infoQuery, sessionID).Scan(
+		&resp.SessionID,
+		&resp.TableID,
+		&resp.TableNumber,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	itemsQuery := `
+		SELECT
+			oi.order_item_id,
+			m.menu_name,
+			oi.quantity,
+			oi.unit_price,
+			(oi.quantity * oi.unit_price) AS line_total
+		FROM customer_orders co
+		JOIN order_items oi ON oi.order_id = co.order_id
+		JOIN menus m ON m.menu_id = oi.menu_id
+		WHERE co.session_id = $1
+		  AND oi.item_status <> 'CANCELLED'
+		ORDER BY oi.order_item_id ASC
+	`
+
+	rows, err := r.DB.Query(ctx, itemsQuery, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]models.BillItemResponse, 0)
+	var subtotal float64
+
+	for rows.Next() {
+		var item models.BillItemResponse
+		if err := rows.Scan(
+			&item.OrderItemID,
+			&item.MenuName,
+			&item.Quantity,
+			&item.UnitPrice,
+			&item.LineTotal,
+		); err != nil {
+			return nil, err
+		}
+
+		subtotal += item.LineTotal
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return nil, fmt.Errorf("NO_ITEMS")
+	}
+
+	resp.Items = items
+	resp.Subtotal = subtotal
+	resp.ServiceCharge = 0
+	resp.VAT = 0
+	resp.TotalAmount = subtotal + resp.ServiceCharge + resp.VAT
+
+	return resp, nil
 }
