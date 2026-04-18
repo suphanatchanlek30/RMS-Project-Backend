@@ -126,3 +126,22 @@ type OrderItemStatusHistory struct {
 	UpdatedByChefID *int      `json:"updatedByChefId"`
 	UpdatedTime     time.Time `json:"updatedTime"`
 }
+
+type CustomerOrderStatusResponse struct {
+	OrderID   int                 `json:"orderId"`
+	OrderTime time.Time           `json:"orderTime"`
+	Items     []CustomerOrderItem `json:"items"`
+}
+
+type CustomerOrderItem struct {
+	OrderItemID int    `json:"orderItemId"`
+	MenuName    string `json:"menuName"`
+	Quantity    int    `json:"quantity"`
+	ItemStatus  string `json:"itemStatus"`
+}
+
+type CustomerOrderStatusData struct {
+	TableID     int                           `json:"tableId"`
+	TableNumber string                        `json:"tableNumber"`
+	Orders      []CustomerOrderStatusResponse `json:"orders"`
+}

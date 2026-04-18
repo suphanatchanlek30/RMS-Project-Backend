@@ -341,3 +341,50 @@ func (h *OrderHandler) GetOrderItemStatusHistory(c *fiber.Ctx) error {
 		Data:    result,
 	})
 }
+
+func (h *OrderHandler) GetCustomerOrderStatus(c *fiber.Ctx) error {
+	qrToken := c.Query("qrToken")
+
+	if qrToken == "" {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "qrToken จำเป็น",
+		})
+	}
+
+	resp, err := h.service.GetCustomerOrderStatus(c.UserContext(), qrToken)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(404).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ QR หรือคำสั่งซื้อ",
+				Data:    nil,
+			})
+		case "GONE":
+			return c.Status(410).JSON(models.APIResponse{
+				Success: false,
+				Message: "QR หมดอายุ",
+				Data:    nil,
+			})
+		case "UNPROCESSABLE":
+			return c.Status(422).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ปิดแล้ว",
+				Data:    nil,
+			})
+		default:
+			return c.Status(500).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาด",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงสถานะออเดอร์สำเร็จ",
+		Data:    resp,
+	})
+}

@@ -373,3 +373,21 @@ func (s *OrderService) GetOrderItemStatusHistory(
 
 	return s.repo.GetOrderItemStatusHistory(ctx, orderItemID)
 }
+
+func (s *OrderService) GetCustomerOrderStatus(
+	ctx context.Context,
+	qrToken string,
+) (models.CustomerOrderStatusData, error) {
+
+	sessionID, _, err := s.validateCustomerContext(ctx, qrToken)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+
+	result, err := s.repo.GetCustomerOrderStatusBySession(ctx, sessionID)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+
+	return result, nil
+}

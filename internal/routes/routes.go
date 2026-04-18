@@ -109,4 +109,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/kitchen/orders", middleware.Protected(), middleware.ChefOnly(), kitchenHandler.GetKitchenOrders)
 	v1.Patch("/order-items/:orderItemId/status", middleware.Protected(), middleware.ChefOnly(), orderHandler.UpdateOrderItemStatus)
 	v1.Get("/order-items/:orderItemId/history", middleware.Protected(), middleware.AdminCashierChef(), orderHandler.GetOrderItemStatusHistory)
+	v1.Get("/customer/order-status", orderHandler.GetCustomerOrderStatus)
 }

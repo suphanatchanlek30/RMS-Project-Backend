@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -420,4 +421,94 @@ func (r *OrderRepository) GetOrderItemStatusHistory(
 	}
 
 	return result, nil
+}
+
+func (r *OrderRepository) GetCustomerOrderStatusBySession(
+	ctx context.Context,
+	sessionID int,
+) (models.CustomerOrderStatusData, error) {
+
+	query := `
+	SELECT 
+		co.order_id,
+		co.order_time,
+		t.table_id,
+		t.table_number,
+		oi.order_item_id,
+		m.menu_name,
+		oi.quantity,
+		oi.item_status
+	FROM customer_orders co
+	JOIN order_items oi ON co.order_id = oi.order_id
+	JOIN menus m ON oi.menu_id = m.menu_id
+	JOIN restaurant_tables t ON co.table_id = t.table_id
+	WHERE co.session_id = $1
+	ORDER BY co.order_time ASC
+	`
+
+	rows, err := r.DB.Query(ctx, query, sessionID)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+	defer rows.Close()
+
+	orderMap := make(map[int]*models.CustomerOrderStatusResponse)
+
+	var finalTableID int
+	var finalTableNumber string
+
+	for rows.Next() {
+		var orderID int
+		var orderTime time.Time
+		var tableID int
+		var tableNumber string
+		var orderItemID int
+		var menuName string
+		var quantity int
+		var status string
+
+		err := rows.Scan(
+			&orderID,
+			&orderTime,
+			&tableID,
+			&tableNumber,
+			&orderItemID,
+			&menuName,
+			&quantity,
+			&status,
+		)
+		if err != nil {
+			return models.CustomerOrderStatusData{}, err
+		}
+
+		finalTableID = tableID
+		finalTableNumber = tableNumber
+
+		if _, ok := orderMap[orderID]; !ok {
+			orderMap[orderID] = &models.CustomerOrderStatusResponse{
+				OrderID:   orderID,
+				OrderTime: orderTime,
+				Items:     []models.CustomerOrderItem{},
+			}
+		}
+
+		orderMap[orderID].Items = append(orderMap[orderID].Items,
+			models.CustomerOrderItem{
+				OrderItemID: orderItemID,
+				MenuName:    menuName,
+				Quantity:    quantity,
+				ItemStatus:  status,
+			})
+	}
+
+	var orders []models.CustomerOrderStatusResponse
+	for _, v := range orderMap {
+		orders = append(orders, *v)
+	}
+
+	return models.CustomerOrderStatusData{
+		TableID:     finalTableID,
+		TableNumber: finalTableNumber,
+		Orders:      orders,
+	}, nil
 }
