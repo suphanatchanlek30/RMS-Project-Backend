@@ -292,3 +292,17 @@ func (s *OrderService) GetOrderItems(ctx context.Context, orderID int) ([]models
 
 	return items, nil
 }
+
+func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID int, quantity int) (*models.OrderItemQuantityResponse, error) {
+
+	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if item.ItemStatus != "WAITING" {
+		return nil, errors.New("invalid status")
+	}
+
+	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
+}

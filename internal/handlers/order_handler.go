@@ -181,3 +181,50 @@ func (h *OrderHandler) GetOrderItems(c *fiber.Ctx) error {
 		"data":    items,
 	})
 }
+
+func (h *OrderHandler) UpdateOrderItemQuantity(c *fiber.Ctx) error {
+	idParam := c.Params("orderItemId")
+
+	orderItemID, err := strconv.Atoi(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "orderItemId ไม่ถูกต้อง",
+		})
+	}
+
+	var req models.UpdateOrderItemRequest
+	if err := c.BodyParser(&req); err != nil || req.Quantity <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "ข้อมูลไม่ถูกต้อง",
+		})
+	}
+
+	result, err := h.service.UpdateOrderItemQuantity(c.Context(), orderItemID, req.Quantity)
+	if err != nil {
+		if err.Error() == "not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"success": false,
+				"message": "ไม่พบ order item",
+			})
+		}
+		if err.Error() == "invalid status" {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"success": false,
+				"message": "สถานะไม่อนุญาตให้แก้",
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "เกิดข้อผิดพลาด",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "แก้ไขจำนวนรายการอาหารสำเร็จ",
+		"data":    result,
+	})
+}

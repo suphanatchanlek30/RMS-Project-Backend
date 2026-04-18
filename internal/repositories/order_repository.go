@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -270,4 +271,51 @@ func (r *OrderRepository) GetOrderItemsByOrderID(ctx context.Context, orderID in
 	}
 
 	return items, nil
+}
+
+func (r *OrderRepository) GetOrderItemByID(ctx context.Context, id int) (*models.OrderItemResponse, error) {
+	query := `
+		SELECT order_item_id, quantity, item_status
+		FROM order_items
+		WHERE order_item_id = $1
+	`
+
+	var item models.OrderItemResponse
+
+	err := r.DB.QueryRow(ctx, query, id).Scan(
+		&item.OrderItemID,
+		&item.Quantity,
+		&item.ItemStatus,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("not found")
+		}
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, quantity int) (*models.OrderItemQuantityResponse, error) {
+	query := `
+		UPDATE order_items
+		SET quantity = $1
+		WHERE order_item_id = $2
+		RETURNING order_item_id, quantity
+	`
+
+	var res models.OrderItemQuantityResponse
+
+	err := r.DB.QueryRow(ctx, query, quantity, id).Scan(
+		&res.OrderItemID,
+		&res.Quantity,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }

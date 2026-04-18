@@ -93,3 +93,12 @@ type OrderRecord struct {
 	OrderStatus         string
 	Items               []OrderItemResponse
 }
+
+type UpdateOrderItemRequest struct {
+	Quantity int `json:"quantity"`
+}
+
+type OrderItemQuantityResponse struct {
+	OrderItemID int `json:"orderItemId"`
+	Quantity    int `json:"quantity"`
+}
