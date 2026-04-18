@@ -107,4 +107,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Delete("/order-items/:orderItemId", middleware.Protected(), middleware.CashierOnly(), orderHandler.CancelOrderItem)
 
 	v1.Get("/kitchen/orders", middleware.Protected(), middleware.ChefOnly(), kitchenHandler.GetKitchenOrders)
+	v1.Patch("/order-items/:orderItemId/status", middleware.Protected(), middleware.ChefOnly(), orderHandler.UpdateOrderItemStatus)
 }

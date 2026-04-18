@@ -279,3 +279,34 @@ func (h *OrderHandler) CancelOrderItem(c *fiber.Ctx) error {
 		Data:    result,
 	})
 }
+
+func (h *OrderHandler) UpdateOrderItemStatus(c *fiber.Ctx) error {
+	orderItemID, _ := strconv.Atoi(c.Params("orderItemId"))
+
+	var req models.UpdateOrderItemStatusRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+		})
+	}
+
+	resp, err := h.service.UpdateOrderItemStatus(
+		c.UserContext(),
+		orderItemID,
+		req.Status,
+	)
+
+	if err != nil {
+		return c.Status(422).JSON(models.APIResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(models.APIResponse{
+		Success: true,
+		Message: "อัปเดตสถานะอาหารสำเร็จ",
+		Data:    resp,
+	})
+}

@@ -307,16 +307,63 @@ func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID 
 	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
 }
 
-func (s *OrderService) CancelOrderItem(ctx context.Context, orderItemID int) (*models.OrderItemStatusResponse, error) {
+func (s *OrderService) CancelOrderItem(
+	ctx context.Context,
+	orderItemID int,
+) (*models.OrderItemStatusResponse, error) {
 
-	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
 	if err != nil {
 		return nil, err
 	}
 
-	if item.ItemStatus != "WAITING" {
-		return nil, errors.New("invalid status")
+	if oldStatus != "WAITING" {
+		return nil, errors.New("ไม่สามารถยกเลิกรายการนี้ได้")
 	}
 
-	return s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED")
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED")
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.OrderItemStatusResponse{
+		OrderItemID: orderItemID,
+		ItemStatus:  "CANCELLED",
+	}, nil
+}
+
+func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID int, newStatus string,
+) (*models.UpdateOrderItemStatusResponse, error) {
+
+	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	valid := false
+
+	switch oldStatus {
+	case "WAITING":
+		valid = newStatus == "PREPARING"
+	case "PREPARING":
+		valid = newStatus == "COMPLETED"
+	default:
+		valid = false
+	}
+
+	if !valid {
+		return nil, errors.New("สถานะไม่ถูกต้องตามลำดับ")
+	}
+
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, newStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UpdateOrderItemStatusResponse{
+		OrderItemID: orderItemID,
+		OldStatus:   oldStatus,
+		NewStatus:   newStatus,
+		UpdatedTime: time.Now(),
+	}, nil
 }

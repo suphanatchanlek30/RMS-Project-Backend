@@ -320,24 +320,45 @@ func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, q
 	return &res, nil
 }
 
-func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, id int, status string) (*models.OrderItemStatusResponse, error) {
-	query := `
-		UPDATE order_items
-		SET item_status = $1
-		WHERE order_item_id = $2
-		RETURNING order_item_id, item_status
-	`
+func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, orderItemID int, status string,
+) error {
 
-	var res models.OrderItemStatusResponse
-
-	err := r.DB.QueryRow(ctx, query, status, id).Scan(
-		&res.OrderItemID,
-		&res.ItemStatus,
+	result, err := r.DB.Exec(ctx,
+		`UPDATE order_items 
+		 SET item_status = $1 
+		 WHERE order_item_id = $2`,
+		status,
+		orderItemID,
 	)
-
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &res, nil
+	if result.RowsAffected() == 0 {
+		return errors.New("order item not found")
+	}
+
+	return nil
+}
+
+func (r *OrderRepository) GetOrderItemStatus(ctx context.Context, orderItemID int,
+) (string, error) {
+
+	var status string
+
+	err := r.DB.QueryRow(ctx,
+		`SELECT item_status 
+		 FROM order_items 
+		 WHERE order_item_id = $1`,
+		orderItemID,
+	).Scan(&status)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", errors.New("order item not found")
+		}
+		return "", err
+	}
+
+	return status, nil
 }
