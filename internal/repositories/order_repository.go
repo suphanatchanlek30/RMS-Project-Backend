@@ -3,7 +3,10 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
@@ -223,4 +226,118 @@ func (r *OrderRepository) GetBySessionID(ctx context.Context, sessionID int) ([]
 	}
 
 	return records, nil
+}
+
+func (r *OrderRepository) GetOrderItemsByOrderID(ctx context.Context, orderID int) ([]models.OrderItemResponse, error) {
+	query := `
+		SELECT 
+			oi.order_item_id,
+			oi.menu_id,
+			m.menu_name,
+			oi.quantity,
+			oi.unit_price,
+			oi.item_status
+		FROM order_items oi
+		JOIN menus m ON oi.menu_id = m.menu_id
+		WHERE oi.order_id = $1;
+	`
+
+	rows, err := r.DB.Query(ctx, query, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []models.OrderItemResponse
+
+	for rows.Next() {
+		var item models.OrderItemResponse
+		err := rows.Scan(
+			&item.OrderItemID,
+			&item.MenuID,
+			&item.MenuName,
+			&item.Quantity,
+			&item.UnitPrice,
+			&item.ItemStatus,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if len(items) == 0 {
+		return nil, pgx.ErrNoRows
+	}
+
+	return items, nil
+}
+
+func (r *OrderRepository) GetOrderItemByID(ctx context.Context, id int) (*models.OrderItemResponse, error) {
+	query := `
+		SELECT order_item_id, quantity, item_status
+		FROM order_items
+		WHERE order_item_id = $1
+	`
+
+	var item models.OrderItemResponse
+
+	err := r.DB.QueryRow(ctx, query, id).Scan(
+		&item.OrderItemID,
+		&item.Quantity,
+		&item.ItemStatus,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("not found")
+		}
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, quantity int) (*models.OrderItemQuantityResponse, error) {
+	query := `
+		UPDATE order_items
+		SET quantity = $1
+		WHERE order_item_id = $2
+		RETURNING order_item_id, quantity
+	`
+
+	var res models.OrderItemQuantityResponse
+
+	err := r.DB.QueryRow(ctx, query, quantity, id).Scan(
+		&res.OrderItemID,
+		&res.Quantity,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, id int, status string) (*models.OrderItemStatusResponse, error) {
+	query := `
+		UPDATE order_items
+		SET item_status = $1
+		WHERE order_item_id = $2
+		RETURNING order_item_id, item_status
+	`
+
+	var res models.OrderItemStatusResponse
+
+	err := r.DB.QueryRow(ctx, query, status, id).Scan(
+		&res.OrderItemID,
+		&res.ItemStatus,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }

@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"time"
 
@@ -276,4 +279,44 @@ func toSessionOrderSummaries(records []models.OrderRecord) []models.SessionOrder
 	}
 
 	return result
+}
+
+func (s *OrderService) GetOrderItems(ctx context.Context, orderID int) ([]models.OrderItemResponse, error) {
+	items, err := s.repo.GetOrderItemsByOrderID(ctx, orderID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("order not found")
+		}
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID int, quantity int) (*models.OrderItemQuantityResponse, error) {
+
+	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if item.ItemStatus != "WAITING" {
+		return nil, errors.New("invalid status")
+	}
+
+	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
+}
+
+func (s *OrderService) CancelOrderItem(ctx context.Context, orderItemID int) (*models.OrderItemStatusResponse, error) {
+
+	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if item.ItemStatus != "WAITING" {
+		return nil, errors.New("invalid status")
+	}
+
+	return s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED")
 }
