@@ -119,3 +119,10 @@ type UpdateOrderItemStatusResponse struct {
 	NewStatus   string    `json:"newStatus"`
 	UpdatedTime time.Time `json:"updatedTime"`
 }
+
+type OrderItemStatusHistory struct {
+	StatusHistoryID int       `json:"statusHistoryId"`
+	Status          string    `json:"status"`
+	UpdatedByChefID *int      `json:"updatedByChefId"`
+	UpdatedTime     time.Time `json:"updatedTime"`
+}

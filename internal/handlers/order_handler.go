@@ -249,16 +249,18 @@ func (h *OrderHandler) CancelOrderItem(c *fiber.Ctx) error {
 		})
 	}
 
-	result, err := h.service.CancelOrderItem(c.Context(), orderItemID)
+	result, err := h.service.CancelOrderItem(c.UserContext(), orderItemID)
 	if err != nil {
-		if err.Error() == "not found" {
+
+		if err.Error() == "order item not found" {
 			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
 				Success: false,
 				Message: "ไม่พบรายการอาหาร",
 				Data:    nil,
 			})
 		}
-		if err.Error() == "invalid status" {
+
+		if err.Error() == "ไม่สามารถยกเลิกรายการนี้ได้" {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
 				Success: false,
 				Message: "รายการถูกทำแล้วหรือชำระแล้ว",
@@ -268,7 +270,7 @@ func (h *OrderHandler) CancelOrderItem(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
 			Success: false,
-			Message: "เกิดข้อผิดพลาด",
+			Message: err.Error(),
 			Data:    nil,
 		})
 	}
@@ -291,10 +293,20 @@ func (h *OrderHandler) UpdateOrderItemStatus(c *fiber.Ctx) error {
 		})
 	}
 
+	chefIDVal := c.Locals("employeeId")
+	chefID, ok := chefIDVal.(int)
+	if !ok {
+		return c.Status(401).JSON(models.APIResponse{
+			Success: false,
+			Message: "token ไม่ถูกต้อง",
+		})
+	}
+
 	resp, err := h.service.UpdateOrderItemStatus(
 		c.UserContext(),
 		orderItemID,
 		req.Status,
+		chefID,
 	)
 
 	if err != nil {
@@ -308,5 +320,24 @@ func (h *OrderHandler) UpdateOrderItemStatus(c *fiber.Ctx) error {
 		Success: true,
 		Message: "อัปเดตสถานะอาหารสำเร็จ",
 		Data:    resp,
+	})
+}
+
+func (h *OrderHandler) GetOrderItemStatusHistory(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("orderItemId"))
+
+	result, err := h.service.GetOrderItemStatusHistory(c.UserContext(), id)
+	if err != nil {
+		return c.Status(404).JSON(models.APIResponse{
+			Success: false,
+			Message: "ไม่พบข้อมูล",
+			Data:    nil,
+		})
+	}
+
+	return c.JSON(models.APIResponse{
+		Success: true,
+		Message: "ดึงประวัติสถานะสำเร็จ",
+		Data:    result,
 	})
 }

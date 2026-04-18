@@ -320,7 +320,7 @@ func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, q
 	return &res, nil
 }
 
-func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, orderItemID int, status string,
+func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, orderItemID int, status string, updatedByChefID *int,
 ) error {
 
 	result, err := r.DB.Exec(ctx,
@@ -336,6 +336,18 @@ func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, orderItemID
 
 	if result.RowsAffected() == 0 {
 		return errors.New("order item not found")
+	}
+
+	_, err = r.DB.Exec(ctx,
+		`INSERT INTO order_status_history 
+		(order_item_id, status, updated_by_chef_id)
+		VALUES ($1, $2, $3)`,
+		orderItemID,
+		status,
+		updatedByChefID,
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -361,4 +373,51 @@ func (r *OrderRepository) GetOrderItemStatus(ctx context.Context, orderItemID in
 	}
 
 	return status, nil
+}
+
+func (r *OrderRepository) GetOrderItemStatusHistory(
+	ctx context.Context,
+	orderItemID int,
+) ([]models.OrderItemStatusHistory, error) {
+
+	query := `
+	SELECT 
+		status_history_id,
+		status,
+		updated_by_chef_id,
+		updated_time
+	FROM order_status_history
+	WHERE order_item_id = $1
+	ORDER BY updated_time ASC
+	`
+
+	rows, err := r.DB.Query(ctx, query, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []models.OrderItemStatusHistory
+
+	for rows.Next() {
+		var h models.OrderItemStatusHistory
+
+		err := rows.Scan(
+			&h.StatusHistoryID,
+			&h.Status,
+			&h.UpdatedByChefID,
+			&h.UpdatedTime,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, h)
+	}
+
+	if len(result) == 0 {
+		return nil, errors.New("not found")
+	}
+
+	return result, nil
 }

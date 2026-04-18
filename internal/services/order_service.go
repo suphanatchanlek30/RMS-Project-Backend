@@ -307,9 +307,7 @@ func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID 
 	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
 }
 
-func (s *OrderService) CancelOrderItem(
-	ctx context.Context,
-	orderItemID int,
+func (s *OrderService) CancelOrderItem(ctx context.Context, orderItemID int,
 ) (*models.OrderItemStatusResponse, error) {
 
 	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
@@ -321,7 +319,7 @@ func (s *OrderService) CancelOrderItem(
 		return nil, errors.New("ไม่สามารถยกเลิกรายการนี้ได้")
 	}
 
-	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED")
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +330,7 @@ func (s *OrderService) CancelOrderItem(
 	}, nil
 }
 
-func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID int, newStatus string,
+func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID int, newStatus string, chefID int,
 ) (*models.UpdateOrderItemStatusResponse, error) {
 
 	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
@@ -355,7 +353,7 @@ func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID in
 		return nil, errors.New("สถานะไม่ถูกต้องตามลำดับ")
 	}
 
-	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, newStatus)
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, newStatus, &chefID)
 	if err != nil {
 		return nil, err
 	}
@@ -366,4 +364,12 @@ func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID in
 		NewStatus:   newStatus,
 		UpdatedTime: time.Now(),
 	}, nil
+}
+
+func (s *OrderService) GetOrderItemStatusHistory(
+	ctx context.Context,
+	orderItemID int,
+) ([]models.OrderItemStatusHistory, error) {
+
+	return s.repo.GetOrderItemStatusHistory(ctx, orderItemID)
 }
