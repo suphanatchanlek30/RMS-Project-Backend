@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 
 	"time"
 
@@ -276,4 +279,115 @@ func toSessionOrderSummaries(records []models.OrderRecord) []models.SessionOrder
 	}
 
 	return result
+}
+
+func (s *OrderService) GetOrderItems(ctx context.Context, orderID int) ([]models.OrderItemResponse, error) {
+	items, err := s.repo.GetOrderItemsByOrderID(ctx, orderID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("order not found")
+		}
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (s *OrderService) UpdateOrderItemQuantity(ctx context.Context, orderItemID int, quantity int) (*models.OrderItemQuantityResponse, error) {
+
+	item, err := s.repo.GetOrderItemByID(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if item.ItemStatus != "WAITING" {
+		return nil, errors.New("invalid status")
+	}
+
+	return s.repo.UpdateOrderItemQuantity(ctx, orderItemID, quantity)
+}
+
+func (s *OrderService) CancelOrderItem(ctx context.Context, orderItemID int,
+) (*models.OrderItemStatusResponse, error) {
+
+	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	if oldStatus != "WAITING" {
+		return nil, errors.New("ไม่สามารถยกเลิกรายการนี้ได้")
+	}
+
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, "CANCELLED", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.OrderItemStatusResponse{
+		OrderItemID: orderItemID,
+		ItemStatus:  "CANCELLED",
+	}, nil
+}
+
+func (s *OrderService) UpdateOrderItemStatus(ctx context.Context, orderItemID int, newStatus string, chefID int,
+) (*models.UpdateOrderItemStatusResponse, error) {
+
+	oldStatus, err := s.repo.GetOrderItemStatus(ctx, orderItemID)
+	if err != nil {
+		return nil, err
+	}
+
+	valid := false
+
+	switch oldStatus {
+	case "WAITING":
+		valid = newStatus == "PREPARING"
+	case "PREPARING":
+		valid = newStatus == "COMPLETED"
+	default:
+		valid = false
+	}
+
+	if !valid {
+		return nil, errors.New("สถานะไม่ถูกต้องตามลำดับ")
+	}
+
+	err = s.repo.UpdateOrderItemStatus(ctx, orderItemID, newStatus, &chefID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.UpdateOrderItemStatusResponse{
+		OrderItemID: orderItemID,
+		OldStatus:   oldStatus,
+		NewStatus:   newStatus,
+		UpdatedTime: time.Now(),
+	}, nil
+}
+
+func (s *OrderService) GetOrderItemStatusHistory(
+	ctx context.Context,
+	orderItemID int,
+) ([]models.OrderItemStatusHistory, error) {
+
+	return s.repo.GetOrderItemStatusHistory(ctx, orderItemID)
+}
+
+func (s *OrderService) GetCustomerOrderStatus(
+	ctx context.Context,
+	qrToken string,
+) (models.CustomerOrderStatusData, error) {
+
+	sessionID, _, err := s.validateCustomerContext(ctx, qrToken)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+
+	result, err := s.repo.GetCustomerOrderStatusBySession(ctx, sessionID)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+
+	return result, nil
 }
