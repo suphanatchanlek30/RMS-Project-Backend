@@ -53,6 +53,18 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	kitchenService := services.NewKitchenService(kitchenRepo)
 	kitchenHandler := handlers.NewKitchenHandler(kitchenService)
 
+	paymentRepo := repositories.NewPaymentRepository(db)
+	receiptRepo := repositories.NewReceiptRepository(db)
+	paymentService := services.NewPaymentService(paymentRepo, tableSessionRepo, receiptRepo)
+	paymentHandler := handlers.NewPaymentHandler(paymentService)
+
+	receiptService := services.NewReceiptService(receiptRepo, paymentRepo)
+	receiptHandler := handlers.NewReceiptHandler(receiptService)
+
+	paymentMethodRepo := repositories.NewPaymentMethodRepository(db)
+	paymentMethodService := services.NewPaymentMethodService(paymentMethodRepo)
+	paymentMethodHandler := handlers.NewPaymentMethodHandler(paymentMethodService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -79,6 +91,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 
 	v1.Post("/table-sessions/open", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.OpenTable)
 	v1.Get("/table-sessions/:sessionId", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetByID)
+	v1.Get("/table-sessions/:sessionId/bill", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetSessionBill)
 	v1.Get("/tables/:tableId/current-session", middleware.Protected(), middleware.AdminOrCashier(), tableSessionHandler.GetCurrentByTableID)
 	v1.Patch("/table-sessions/:sessionId/close", middleware.Protected(), middleware.CashierOnly(), tableSessionHandler.CloseSession)
 
@@ -110,4 +123,11 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Patch("/order-items/:orderItemId/status", middleware.Protected(), middleware.ChefOnly(), orderHandler.UpdateOrderItemStatus)
 	v1.Get("/order-items/:orderItemId/history", middleware.Protected(), middleware.AdminCashierChef(), orderHandler.GetOrderItemStatusHistory)
 	v1.Get("/customer/order-status", orderHandler.GetCustomerOrderStatus)
+
+	v1.Post("/payments", middleware.Protected(), middleware.CashierOnly(), paymentHandler.Create)
+	v1.Get("/payments/:paymentId", middleware.Protected(), middleware.AdminOrCashier(), paymentHandler.GetByID)
+	v1.Get("/payments", middleware.Protected(), middleware.AdminOnly(), paymentHandler.GetAll)
+	v1.Get("/payment-methods", middleware.Protected(), middleware.AdminOrCashier(), paymentMethodHandler.GetAll)
+	v1.Get("/payments/:paymentId/receipt", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByPaymentID)
+	v1.Get("/receipts/:receiptId", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByReceiptID)
 }

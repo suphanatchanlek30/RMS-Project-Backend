@@ -1520,6 +1520,326 @@ Expected Response (200):
 - QR หมดอายุ -> `410 QR หมดอายุ`
 - session ปิดแล้ว -> `422 session ปิดแล้ว`
 
+### 4️⃣4️⃣ Get Session Bill (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/table-sessions/1001/bill`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "คำนวณบิลสำเร็จ",
+  "data": {
+    "sessionId": 1001,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "items": [
+      {
+        "orderItemId": 1,
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "orderItemId": 2,
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ],
+    "subtotal": 193,
+    "serviceCharge": 0,
+    "vat": 0,
+    "totalAmount": 193
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `sessionId` ไม่ถูกต้อง -> `400 sessionId ไม่ถูกต้อง`
+- ไม่พบ session -> `404 ไม่พบ session`
+- session ไม่พร้อมคิดเงิน -> `422 session ไม่พร้อมคิดเงิน`
+
+### 4️⃣5️⃣ Create Payment (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/payments`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1001,
+  "paymentMethodId": 1,
+  "receivedAmount": 200
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "ชำระเงินสำเร็จ",
+  "data": {
+    "paymentId": 3001,
+    "sessionId": 1001,
+    "paymentMethodId": 1,
+    "paymentMethodName": "CASH",
+    "totalAmount": 193,
+    "receivedAmount": 200,
+    "changeAmount": 7,
+    "paymentTime": "2025-08-20T13:20:00Z",
+    "paymentStatus": "PAID"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- body ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ session -> `404 ไม่พบ session`
+- ไม่พบ payment method -> `404 ไม่พบ payment method`
+- จ่ายซ้ำ session เดิม -> `409 จ่ายแล้ว`
+- receivedAmount ไม่พอ -> `422 receivedAmount ไม่พอ`
+
+### 4️⃣6️⃣ Get Payment By ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments/3001`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลการชำระเงินสำเร็จ",
+  "data": {
+    "paymentId": 3001,
+    "sessionId": 1001,
+    "paymentMethodId": 1,
+    "paymentMethodName": "CASH",
+    "totalAmount": 193,
+    "paymentTime": "2025-08-20T13:20:00Z",
+    "paymentStatus": "PAID"
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `paymentId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ payment -> `404 ไม่พบ payment`
+
+### 4️⃣7️⃣ Get All Payments (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments?dateFrom=2025-08-01T00:00:00Z&dateTo=2025-08-31T23:59:59Z&paymentMethodId=1&status=PAID&page=1&limit=20`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Query Parameters (ทั้งหมดเป็น optional):
+
+- `dateFrom` = วันเวลาเริ่มต้นของช่วงค้นหา
+- `dateTo` = วันเวลาสิ้นสุดของช่วงค้นหา
+- `paymentMethodId` = กรองตามวิธีการชำระ
+- `status` = กรองตามสถานะการชำระ เช่น `PAID`
+- `page` = หน้าที่ (default: 1)
+- `limit` = จำนวนต่อหน้า (default: 20)
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการการชำระเงินสำเร็จ",
+  "data": {
+    "items": [
+      {
+        "paymentId": 3001,
+        "sessionId": 1001,
+        "paymentMethodName": "CASH",
+        "totalAmount": 193,
+        "paymentStatus": "PAID",
+        "paymentTime": "2025-08-20T13:20:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่มี token -> `401`
+- token ไม่ใช่ ADMIN -> `403`
+
+### 4️⃣8️⃣ Get All Payment Methods (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payment-methods`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงวิธีชำระเงินสำเร็จ",
+  "data": [
+    {
+      "paymentMethodId": 1,
+      "methodName": "CASH"
+    },
+    {
+      "paymentMethodId": 2,
+      "methodName": "QR"
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่มี token -> `401`
+- token ไม่ใช่ ADMIN หรือ CASHIER -> `403`
+
+### 4️⃣9️⃣ Get Receipt By Payment ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/payments/3001/receipt`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลใบเสร็จสำเร็จ",
+  "data": {
+    "receiptId": 4001,
+    "receiptNumber": "RCT-20250820-0001",
+    "issueDate": "2025-08-20T13:20:10Z",
+    "totalAmount": 193,
+    "payment": {
+      "paymentId": 3001,
+      "paymentMethodName": "CASH",
+      "paymentTime": "2025-08-20T13:20:00Z"
+    },
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "items": [
+      {
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `paymentId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ receipt หรือ payment -> `404 ไม่พบ receipt หรือ payment`
+
+### 5️⃣0️⃣ Get Receipt By Receipt ID (ADMIN/CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/receipts/4001`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูลใบเสร็จสำเร็จ",
+  "data": {
+    "receiptId": 4001,
+    "receiptNumber": "RCT-20250820-0001",
+    "issueDate": "2025-08-20T13:20:10Z",
+    "totalAmount": 193,
+    "payment": {
+      "paymentId": 3001,
+      "paymentMethodName": "CASH",
+      "paymentTime": "2025-08-20T13:20:00Z"
+    },
+    "table": {
+      "tableId": 1,
+      "tableNumber": "A01"
+    },
+    "items": [
+      {
+        "menuName": "ข้าวผัดกุ้ง",
+        "quantity": 2,
+        "unitPrice": 89,
+        "lineTotal": 178
+      },
+      {
+        "menuName": "น้ำเปล่า",
+        "quantity": 1,
+        "unitPrice": 15,
+        "lineTotal": 15
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `receiptId` ไม่ถูกต้อง -> `400 ข้อมูลไม่ถูกต้อง`
+- ไม่พบ receipt -> `404 ไม่พบ receipt`
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
@@ -2027,6 +2347,7 @@ Expected Response (422):
 - `PATCH /api/v1/tables/:tableId`
 - `POST /api/v1/table-sessions/open`
 - `GET /api/v1/table-sessions/:sessionId`
+- `GET /api/v1/table-sessions/:sessionId/bill`
 - `GET /api/v1/tables/:tableId/current-session`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
@@ -2046,6 +2367,12 @@ Expected Response (422):
 - `GET /api/v1/kitchen/orders`
 - `PATCH /api/v1/order-items/:orderItemId/status`
 - `GET /api/v1/order-items/:orderItemId/history`
+- `POST /api/v1/payments`
+- `GET /api/v1/payments/:paymentId`
+- `GET /api/v1/payments`
+- `GET /api/v1/payment-methods`
+- `GET /api/v1/payments/:paymentId/receipt`
+- `GET /api/v1/receipts/:receiptId`
 
 ## คำสั่งช่วยตรวจสถานะ
 
