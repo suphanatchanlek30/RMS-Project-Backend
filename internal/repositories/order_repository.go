@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -320,24 +321,194 @@ func (r *OrderRepository) UpdateOrderItemQuantity(ctx context.Context, id int, q
 	return &res, nil
 }
 
-func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, id int, status string) (*models.OrderItemStatusResponse, error) {
+func (r *OrderRepository) UpdateOrderItemStatus(ctx context.Context, orderItemID int, status string, updatedByChefID *int,
+) error {
+
+	result, err := r.DB.Exec(ctx,
+		`UPDATE order_items 
+		 SET item_status = $1 
+		 WHERE order_item_id = $2`,
+		status,
+		orderItemID,
+	)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return errors.New("order item not found")
+	}
+
+	_, err = r.DB.Exec(ctx,
+		`INSERT INTO order_status_history 
+		(order_item_id, status, updated_by_chef_id)
+		VALUES ($1, $2, $3)`,
+		orderItemID,
+		status,
+		updatedByChefID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *OrderRepository) GetOrderItemStatus(ctx context.Context, orderItemID int,
+) (string, error) {
+
+	var status string
+
+	err := r.DB.QueryRow(ctx,
+		`SELECT item_status 
+		 FROM order_items 
+		 WHERE order_item_id = $1`,
+		orderItemID,
+	).Scan(&status)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", errors.New("order item not found")
+		}
+		return "", err
+	}
+
+	return status, nil
+}
+
+func (r *OrderRepository) GetOrderItemStatusHistory(
+	ctx context.Context,
+	orderItemID int,
+) ([]models.OrderItemStatusHistory, error) {
+
 	query := `
-		UPDATE order_items
-		SET item_status = $1
-		WHERE order_item_id = $2
-		RETURNING order_item_id, item_status
+	SELECT 
+		status_history_id,
+		status,
+		updated_by_chef_id,
+		updated_time
+	FROM order_status_history
+	WHERE order_item_id = $1
+	ORDER BY updated_time ASC
 	`
 
-	var res models.OrderItemStatusResponse
-
-	err := r.DB.QueryRow(ctx, query, status, id).Scan(
-		&res.OrderItemID,
-		&res.ItemStatus,
-	)
-
+	rows, err := r.DB.Query(ctx, query, orderItemID)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return &res, nil
+	var result []models.OrderItemStatusHistory
+
+	for rows.Next() {
+		var h models.OrderItemStatusHistory
+
+		err := rows.Scan(
+			&h.StatusHistoryID,
+			&h.Status,
+			&h.UpdatedByChefID,
+			&h.UpdatedTime,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, h)
+	}
+
+	if len(result) == 0 {
+		return nil, errors.New("not found")
+	}
+
+	return result, nil
+}
+
+func (r *OrderRepository) GetCustomerOrderStatusBySession(
+	ctx context.Context,
+	sessionID int,
+) (models.CustomerOrderStatusData, error) {
+
+	query := `
+	SELECT 
+		co.order_id,
+		co.order_time,
+		t.table_id,
+		t.table_number,
+		oi.order_item_id,
+		m.menu_name,
+		oi.quantity,
+		oi.item_status
+	FROM customer_orders co
+	JOIN order_items oi ON co.order_id = oi.order_id
+	JOIN menus m ON oi.menu_id = m.menu_id
+	JOIN restaurant_tables t ON co.table_id = t.table_id
+	WHERE co.session_id = $1
+	ORDER BY co.order_time ASC
+	`
+
+	rows, err := r.DB.Query(ctx, query, sessionID)
+	if err != nil {
+		return models.CustomerOrderStatusData{}, err
+	}
+	defer rows.Close()
+
+	orderMap := make(map[int]*models.CustomerOrderStatusResponse)
+
+	var finalTableID int
+	var finalTableNumber string
+
+	for rows.Next() {
+		var orderID int
+		var orderTime time.Time
+		var tableID int
+		var tableNumber string
+		var orderItemID int
+		var menuName string
+		var quantity int
+		var status string
+
+		err := rows.Scan(
+			&orderID,
+			&orderTime,
+			&tableID,
+			&tableNumber,
+			&orderItemID,
+			&menuName,
+			&quantity,
+			&status,
+		)
+		if err != nil {
+			return models.CustomerOrderStatusData{}, err
+		}
+
+		finalTableID = tableID
+		finalTableNumber = tableNumber
+
+		if _, ok := orderMap[orderID]; !ok {
+			orderMap[orderID] = &models.CustomerOrderStatusResponse{
+				OrderID:   orderID,
+				OrderTime: orderTime,
+				Items:     []models.CustomerOrderItem{},
+			}
+		}
+
+		orderMap[orderID].Items = append(orderMap[orderID].Items,
+			models.CustomerOrderItem{
+				OrderItemID: orderItemID,
+				MenuName:    menuName,
+				Quantity:    quantity,
+				ItemStatus:  status,
+			})
+	}
+
+	var orders []models.CustomerOrderStatusResponse
+	for _, v := range orderMap {
+		orders = append(orders, *v)
+	}
+
+	return models.CustomerOrderStatusData{
+		TableID:     finalTableID,
+		TableNumber: finalTableNumber,
+		Orders:      orders,
+	}, nil
 }
