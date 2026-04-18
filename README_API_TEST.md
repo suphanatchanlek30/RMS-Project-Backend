@@ -1253,6 +1253,226 @@ Expected Response (200):
 - `qrToken` หมดอายุ -> `410 QR หมดอายุ`
 - `session` ปิดแล้ว หรือเมนูปิดขาย -> `422 เมนูปิดขาย/โต๊ะไม่พร้อมใช้งาน`
 
+### 3️⃣7️⃣ Get Order Items By Order (ADMIN, CASHIER, CHEF)
+
+Method: `GET`<br>
+URL: `{{baseUrl}}/api/v1/orders/:orderId/items`<br>
+Headers:
+
+- `Authorization: Bearer {{token}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายการอาหารสำเร็จ",
+  "data": [
+    {
+      "orderItemId": 1,
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "quantity": 2,
+      "unitPrice": 89.00,
+      "itemStatus": "PREPARING"
+    }
+  ]
+}
+```
+
+### 3️⃣8️⃣ Update Order Item Quantity (CASHIER)
+
+Method: `PATCH`<br>
+URL: `{{baseUrl}}/api/v1/order-items/:orderItemId`<br>
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body:
+
+```json
+{
+  "quantity": 3
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "แก้ไขจำนวนรายการอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "quantity": 3
+  }
+}
+```
+
+### 3️⃣9️⃣ Cancel Order Item (CASHIER)
+
+Method: `DELETE`<br>
+URL: `{{baseUrl}}/api/v1/order-items/:orderItemId`<br>
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ยกเลิกรายการอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "itemStatus": "CANCELLED"
+  }
+}
+```
+
+### 4️⃣0️⃣ Get Kitchen Orders (Chef)
+
+Method: `GET`<br>
+URL: `{{baseUrl}}/api/v1/kitchen/orders`<br>
+Headers:
+
+- `Authorization: Bearer {{chefToken}}`
+
+Query:
+
+```json
+status, tableId, page, limit
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงคิวครัวสำเร็จ",
+  "data": [
+    {
+      "orderId": 9001,
+      "tableId": 1,
+      "tableNumber": "A01",
+      "orderTime": "2025-08-20T12:10:00Z",
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "itemStatus": "WAITING"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 4️⃣1️⃣ Update Order Item Status (Chef)
+
+Method: `PATCH`<br>
+URL: `{{baseUrl}}/api/v1/order-items/:orderItemId/status`<br>
+Headers:
+
+- `Authorization: Bearer {{chefToken}}`
+
+Body:
+
+```json
+{
+  "status": "PREPARING",
+  "updatedByChefId": 21
+}
+```
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "อัปเดตสถานะอาหารสำเร็จ",
+  "data": {
+    "orderItemId": 1,
+    "oldStatus": "WAITING",
+    "newStatus": "PREPARING",
+    "updatedTime": "2025-08-20T12:20:00Z"
+  }
+}
+```
+
+### 4️⃣2️⃣ Get Order Item Status History (Chef)
+
+Method: `GET`<br>
+URL: `{{baseUrl}}/api/v1/order-items/:orderItemId/history`<br>
+Headers:
+
+- `Authorization: Bearer {{token}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงประวัติสถานะสำเร็จ",
+  "data": [
+    {
+      "statusHistoryId": 1,
+      "status": "WAITING",
+      "updatedByChefId": null,
+      "updatedTime": "2025-08-20T12:10:00Z"
+    },
+    {
+      "statusHistoryId": 2,
+      "status": "PREPARING",
+      "updatedByChefId": 21,
+      "updatedTime": "2025-08-20T12:20:00Z"
+    }
+  ]
+}
+```
+
+### 4️⃣3️⃣ Get Customer Order Status (ADMIN, CASHIER, CHEF)
+
+Method: `GET`<br>
+URL: `{{baseUrl}}/api/v1/customer/order-status?qrToken=xxx`<br>
+Headers: None
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงสถานะอาหารสำเร็จ",
+  "data": {
+    "tableId": 1,
+    "tableNumber": "A01",
+    "orders": [
+      {
+        "orderId": 9001,
+        "orderTime": "2025-08-20T12:10:00Z",
+        "items": [
+          {
+            "orderItemId": 1,
+            "menuName": "ข้าวผัดกุ้ง",
+            "quantity": 2,
+            "itemStatus": "PREPARING"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## Negative Test ที่ควรลองเพิ่ม
 
 ### A) Roles ไม่มี token
