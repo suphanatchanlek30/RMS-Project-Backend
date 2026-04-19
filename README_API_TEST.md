@@ -664,6 +664,42 @@ Expected Response (200):
 }
 ```
 
+### 1️⃣8️⃣.1️⃣ Get Tables Overview (CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/tables/overview`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงภาพรวมโต๊ะสำเร็จ",
+  "data": [
+    {
+      "tableId": 1,
+      "tableNumber": "A01",
+      "tableStatus": "OCCUPIED",
+      "currentSession": {
+        "sessionId": 1,
+        "startTime": "2025-08-20T12:00:00Z"
+      }
+    },
+    {
+      "tableId": 2,
+      "tableNumber": "A02",
+      "tableStatus": "AVAILABLE",
+      "currentSession": null
+    }
+  ]
+}
+```
+
 ### 1️⃣9️⃣ Close Table Session (CASHIER)
 
 Method: `PATCH`  

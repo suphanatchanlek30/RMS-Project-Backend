@@ -247,6 +247,7 @@ docker compose up --build -d
 
 ### CASHIER เท่านั้น
 
+- `GET /api/v1/cashier/tables/overview`
 - `POST /api/v1/table-sessions/open`
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
