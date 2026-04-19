@@ -2327,6 +2327,230 @@ Expected Response (422):
 }
 ```
 
+## ชุดทดสอบเพิ่มเติมตาม Spec 16-18 (Cashier Convenience, Dashboard, Reports)
+
+ลำดับแนะนำ:
+
+1. Login ด้วย `cashier` เพื่อเอา `cashierToken`
+2. เปิดโต๊ะและสร้าง order ให้มีข้อมูลบิล
+3. ทดสอบ `GET /api/v1/cashier/tables/overview`
+4. ทดสอบ `GET /api/v1/cashier/sessions/:sessionId/checkout`
+5. ทดสอบ `POST /api/v1/cashier/checkout`
+6. Login ด้วย `admin` เพื่อทดสอบ dashboard และ reports
+
+### 16.1) Cashier Tables Overview
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/tables/overview`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงภาพรวมโต๊ะสำเร็จ",
+  "data": [
+    {
+      "tableId": 1,
+      "tableNumber": "A01",
+      "tableStatus": "OCCUPIED",
+      "currentSession": {
+        "sessionId": 1001,
+        "startTime": "2025-08-20T12:00:00Z"
+      }
+    },
+    {
+      "tableId": 2,
+      "tableNumber": "A02",
+      "tableStatus": "AVAILABLE",
+      "currentSession": null
+    }
+  ]
+}
+```
+
+### 16.2) Session Checkout Summary
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/sessions/{{sessionId}}/checkout`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล checkout สำเร็จ",
+  "data": {
+    "sessionId": 1001,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "bill": {
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "unitPrice": 89,
+          "lineTotal": 178
+        }
+      ],
+      "totalAmount": 193
+    },
+    "paymentMethods": [
+      {
+        "paymentMethodId": 1,
+        "methodName": "CASH"
+      }
+    ]
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `sessionId` ไม่ถูกต้อง -> `422`
+- ไม่พบ session -> `404`
+
+### 16.3) Cashier Checkout (จ่าย + ออกใบเสร็จ + ปิดโต๊ะ)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/cashier/checkout`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1001,
+  "paymentMethodId": 1,
+  "receivedAmount": 200
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "ชำระเงินและปิดโต๊ะสำเร็จ",
+  "data": {
+    "paymentId": 3001,
+    "receiptId": 4001,
+    "receiptNumber": "RCT-20250820-0001",
+    "sessionId": 1001,
+    "sessionStatus": "CLOSED",
+    "tableId": 1,
+    "tableStatus": "AVAILABLE",
+    "changeAmount": 7
+  }
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่พบ session หรือ payment method -> `404`
+- session ปิดไปแล้ว/จ่ายซ้ำ/มีรายการที่ยังไม่พร้อมชำระ -> `409`
+- body ไม่ถูกต้อง หรือเงินไม่พอ -> `422`
+
+### 17.1) Dashboard Summary (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/dashboard/summary`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล dashboard สำเร็จ",
+  "data": {
+    "todaySales": 12500,
+    "todayOrders": 85,
+    "occupiedTables": 7,
+    "availableTables": 13,
+    "topMenu": {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalSold": 24
+    }
+  }
+}
+```
+
+### 18.1) Reports Sales (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/reports/sales?dateFrom=2025-08-01&dateTo=2025-08-31&groupBy=day`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายงานยอดขายสำเร็จ",
+  "data": [
+    {
+      "date": "2025-08-20",
+      "totalSales": 12500,
+      "totalOrders": 85
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- ไม่ส่ง `dateFrom/dateTo`
+- `dateFrom > dateTo`
+- `groupBy` ไม่ใช่ `day` หรือ `month`
+- ทุกกรณีข้างบนต้องได้ `400 query ไม่ถูกต้อง`
+
+### 18.2) Reports Top Menus (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/reports/top-menus?dateFrom=2025-08-01&dateTo=2025-08-31&limit=10`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายงานเมนูขายดีสำเร็จ",
+  "data": [
+    {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalQuantity": 120,
+      "totalAmount": 10680
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลอง:
+
+- `limit` เป็นค่าติดลบ หรือมากกว่า 100 -> `400`
+- `dateFrom/dateTo` format ไม่ถูกต้อง -> `400`
+- ไม่ส่ง token หรือ role ไม่ใช่ ADMIN -> `401/403`
+
 ## สรุป Endpoint ทั้งหมดในระบบปัจจุบัน
 
 - `GET /health`
@@ -2373,6 +2597,12 @@ Expected Response (422):
 - `GET /api/v1/payment-methods`
 - `GET /api/v1/payments/:paymentId/receipt`
 - `GET /api/v1/receipts/:receiptId`
+- `GET /api/v1/cashier/tables/overview`
+- `GET /api/v1/cashier/sessions/:sessionId/checkout`
+- `POST /api/v1/cashier/checkout`
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/reports/sales`
+- `GET /api/v1/reports/top-menus`
 
 ## คำสั่งช่วยตรวจสถานะ
 

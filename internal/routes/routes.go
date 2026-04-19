@@ -65,6 +65,18 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	paymentMethodService := services.NewPaymentMethodService(paymentMethodRepo)
 	paymentMethodHandler := handlers.NewPaymentMethodHandler(paymentMethodService)
 
+	cashierRepo := repositories.NewCashierRepository(db)
+	cashierService := services.NewCashierService(cashierRepo)
+	cashierHandler := handlers.NewCashierHandler(cashierService)
+
+	dashboardRepo := repositories.NewDashboardRepository(db)
+	dashboardService := services.NewDashboardService(dashboardRepo)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -130,4 +142,13 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/payment-methods", middleware.Protected(), middleware.AdminOrCashier(), paymentMethodHandler.GetAll)
 	v1.Get("/payments/:paymentId/receipt", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByPaymentID)
 	v1.Get("/receipts/:receiptId", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByReceiptID)
+
+	v1.Get("/cashier/tables/overview", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetTablesOverview)
+	v1.Get("/cashier/sessions/:sessionId/checkout", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetSessionCheckout)
+	v1.Post("/cashier/checkout", middleware.Protected(), middleware.CashierOnly(), cashierHandler.Checkout)
+
+	v1.Get("/dashboard/summary", middleware.Protected(), middleware.AdminOnly(), dashboardHandler.GetSummary)
+
+	v1.Get("/reports/sales", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetSalesReport)
+	v1.Get("/reports/top-menus", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetTopMenusReport)
 }

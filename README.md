@@ -229,6 +229,9 @@ docker compose up --build -d
 - `POST /api/v1/menus`
 - `PATCH /api/v1/menus/:menuId`
 - `PATCH /api/v1/menus/:menuId/status`
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/reports/sales`
+- `GET /api/v1/reports/top-menus`
 
 ### ADMIN หรือ CASHIER
 
@@ -251,6 +254,9 @@ docker compose up --build -d
 - `PATCH /api/v1/table-sessions/:sessionId/close`
 - `POST /api/v1/qr-sessions`
 - `POST /api/v1/orders`
+- `GET /api/v1/cashier/tables/overview`
+- `GET /api/v1/cashier/sessions/:sessionId/checkout`
+- `POST /api/v1/cashier/checkout`
 
 หมายเหตุ: ต้องตั้ง `password_hash` ให้บัญชี seed ก่อนตามขั้นตอนใน [README_API_TEST.md](README_API_TEST.md)
 
