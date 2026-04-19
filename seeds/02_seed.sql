@@ -58,5 +58,5 @@ ON CONFLICT (menu_id, ingredient_id) DO NOTHING;
 
 INSERT INTO payment_methods (method_name) VALUES
 ('CASH'),
-('QR')
+('QR_PAYMENT')
 ON CONFLICT (method_name) DO NOTHING;
