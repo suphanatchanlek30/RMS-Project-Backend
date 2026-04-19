@@ -190,7 +190,125 @@ Expected Response (200):
 }
 ```
 
-### 4️⃣ Roles (ADMIN เท่านั้น)
+### 4️⃣.1️⃣ Dashboard Summary (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/dashboard/summary`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล dashboard สำเร็จ",
+  "data": {
+    "todaySales": 12500.00,
+    "todayOrders": 85,
+    "occupiedTables": 7,
+    "availableTables": 13,
+    "topMenu": {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalSold": 24
+    }
+  }
+}
+```
+
+### 4️⃣.2️⃣ Sales Report (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/reports/sales?dateFrom=2025-08-01&dateTo=2025-08-31&groupBy=day`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+**Query Parameters:**
+- `dateFrom` (required) - วันที่เริ่มต้น (YYYY-MM-DD)
+- `dateTo` (required) - วันที่สิ้นสุด (YYYY-MM-DD)
+- `groupBy` (required) - จัดกลุ่มข้อมูล: `day` หรือ `month`
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายงานยอดขายสำเร็จ",
+  "data": [
+    {
+      "date": "2025-08-20",
+      "totalSales": 12500.00,
+      "totalOrders": 85
+    },
+    {
+      "date": "2025-08-21",
+      "totalSales": 9800.00,
+      "totalOrders": 72
+    }
+  ]
+}
+```
+
+**ตัวอย่างการใช้งาน:**
+- รายงานวันต่อวัน: `groupBy=day`
+- รายงานเดือนต่อเดือน: `groupBy=month`
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่ส่ง query parameters -> `400 กรุณาระบุ dateFrom, dateTo, และ groupBy`
+- `dateFrom` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateTo` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateFrom` > `dateTo` -> `400 query ไม่ถูกต้อง`
+- `groupBy` ไม่ใช่ `day` หรือ `month` -> `400 query ไม่ถูกต้อง`
+
+### 4️⃣.3️⃣ Top Menus Report (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/reports/top-menus?dateFrom=2025-08-01&dateTo=2025-08-31&limit=5`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+**Query Parameters:**
+- `dateFrom` (required) - วันที่เริ่มต้น (YYYY-MM-DD)
+- `dateTo` (required) - วันที่สิ้นสุด (YYYY-MM-DD)
+- `limit` (required) - จำนวนเมนูที่ต้องการแสดง
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายงานเมนูขายดีสำเร็จ",
+  "data": [
+    {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalQuantity": 120,
+      "totalAmount": 10680.00
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่ส่ง query parameters -> `400 กรุณาระบุ dateFrom, dateTo, และ limit`
+- `dateFrom` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateTo` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateFrom` > `dateTo` -> `400 query ไม่ถูกต้อง`
+- `limit` ไม่ใช่จำนวนเต็มบวก -> `400 query ไม่ถูกต้อง`
+
+### 4️⃣.4️⃣ Roles (ADMIN เท่านั้น)
 
 Method: `GET`  
 URL: `{{baseUrl}}/api/v1/roles`  
