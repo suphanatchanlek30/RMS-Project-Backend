@@ -56,3 +56,50 @@ func (h *CashierHandler) GetCheckout(c *fiber.Ctx) error {
 		Data:    checkout,
 	})
 }
+
+func (h *CashierHandler) Checkout(c *fiber.Ctx) error {
+	var req models.CheckoutRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	resp, err := h.service.Checkout(c.UserContext(), &req)
+	if err != nil {
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ session",
+				Data:    nil,
+			})
+		case "CONFLICT":
+			return c.Status(fiber.StatusConflict).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ไม่พร้อมสำหรับการชำระเงิน",
+				Data:    nil,
+			})
+		case "VALIDATION":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "จำนวนเงินที่รับไม่เพียงพอ",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(models.APIResponse{
+		Success: true,
+		Message: "ชำระเงินและปิดโต๊ะสำเร็จ",
+		Data:    resp,
+	})
+}

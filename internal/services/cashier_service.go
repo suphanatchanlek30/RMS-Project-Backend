@@ -22,3 +22,7 @@ func (s *CashierService) GetTablesOverview(ctx context.Context) ([]models.Cashie
 func (s *CashierService) GetCheckout(ctx context.Context, sessionID int) (*models.CheckoutResponse, error) {
 	return s.repo.GetCheckout(ctx, sessionID)
 }
+
+func (s *CashierService) Checkout(ctx context.Context, req *models.CheckoutRequest) (*models.CheckoutResponseData, error) {
+	return s.repo.Checkout(ctx, req)
+}

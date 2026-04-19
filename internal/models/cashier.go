@@ -39,3 +39,20 @@ type CheckoutResponse struct {
 	Bill           CheckoutBill             `json:"bill"`
 	PaymentMethods []CheckoutPaymentMethod `json:"paymentMethods"`
 }
+
+type CheckoutRequest struct {
+	SessionID       int     `json:"sessionId"`
+	PaymentMethodID int     `json:"paymentMethodId"`
+	ReceivedAmount  float64 `json:"receivedAmount"`
+}
+
+type CheckoutResponseData struct {
+	PaymentID      int     `json:"paymentId"`
+	ReceiptID      int     `json:"receiptId"`
+	ReceiptNumber  string  `json:"receiptNumber"`
+	SessionID      int     `json:"sessionId"`
+	SessionStatus  string  `json:"sessionStatus"`
+	TableID        int     `json:"tableId"`
+	TableStatus    string  `json:"tableStatus"`
+	ChangeAmount   float64 `json:"changeAmount"`
+}
