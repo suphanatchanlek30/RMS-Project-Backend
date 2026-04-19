@@ -700,6 +700,52 @@ Expected Response (200):
 }
 ```
 
+### 1️⃣8️⃣.2️⃣ Get Checkout (CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/sessions/1/checkout`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล checkout สำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "bill": {
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "unitPrice": 89.00,
+          "lineTotal": 178.00
+        }
+      ],
+      "totalAmount": 178.00
+    },
+    "paymentMethods": [
+      {
+        "paymentMethodId": 1,
+        "methodName": "CASH"
+      },
+      {
+        "paymentMethodId": 2,
+        "methodName": "QR_PAYMENT"
+      }
+    ]
+  }
+}
+```
+
 ### 1️⃣9️⃣ Close Table Session (CASHIER)
 
 Method: `PATCH`  

@@ -2,24 +2,23 @@ package services
 
 import (
 	"context"
-	"rms-project-backend/internal/models"
-	"rms-project-backend/internal/repositories"
+
+	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
+	"github.com/suphanatchanlek30/rms-project-backend/internal/repositories"
 )
 
-type CashierService interface {
-	GetTablesOverview(ctx context.Context) ([]models.CashierTableOverviewItem, error)
+type CashierService struct {
+	repo *repositories.CashierRepository
 }
 
-type cashierService struct {
-	cashierRepo repositories.CashierRepository
+func NewCashierService(repo *repositories.CashierRepository) *CashierService {
+	return &CashierService{repo: repo}
 }
 
-func NewCashierService(cashierRepo repositories.CashierRepository) CashierService {
-	return &cashierService{
-		cashierRepo: cashierRepo,
-	}
+func (s *CashierService) GetTablesOverview(ctx context.Context) ([]models.CashierTableOverview, error) {
+	return s.repo.GetTablesOverview(ctx)
 }
 
-func (s *cashierService) GetTablesOverview(ctx context.Context) ([]models.CashierTableOverviewItem, error) {
-	return s.cashierRepo.GetTablesOverview(ctx)
+func (s *CashierService) GetCheckout(ctx context.Context, sessionID int) (*models.CheckoutResponse, error) {
+	return s.repo.GetCheckout(ctx, sessionID)
 }

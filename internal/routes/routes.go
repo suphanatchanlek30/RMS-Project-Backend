@@ -136,4 +136,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/receipts/:receiptId", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByReceiptID)
 
 	v1.Get("/cashier/tables/overview", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetTablesOverview)
+	v1.Get("/cashier/sessions/:sessionId/checkout", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetCheckout)
 }

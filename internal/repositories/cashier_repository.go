@@ -68,3 +68,60 @@ func (r *CashierRepository) GetTablesOverview(ctx context.Context) ([]models.Cas
 
 	return tables, rows.Err()
 }
+
+func (r *CashierRepository) GetCheckout(ctx context.Context, sessionID int) (*models.CheckoutResponse, error) {
+	query := `SELECT ts.session_id, rt.table_id, rt.table_number
+	FROM table_sessions ts
+	JOIN restaurant_tables rt ON ts.table_id = rt.table_id
+	WHERE ts.session_id = $1`
+
+	var resp models.CheckoutResponse
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(&resp.SessionID, &resp.TableID, &resp.TableNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	query = `SELECT oi.order_item_id, m.menu_name, oi.quantity, oi.unit_price, (oi.quantity * oi.unit_price) as line_total
+	FROM order_items oi
+	JOIN menus m ON oi.menu_id = m.menu_id
+	JOIN customer_orders co ON oi.order_id = co.order_id
+	WHERE co.session_id = $1`
+
+	rows, err := r.DB.Query(ctx, query, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var total float64
+	for rows.Next() {
+		var item models.CheckoutBillItem
+		err := rows.Scan(&item.OrderItemID, &item.MenuName, &item.Quantity, &item.UnitPrice, &item.LineTotal)
+		if err != nil {
+			return nil, err
+		}
+		resp.Bill.Items = append(resp.Bill.Items, item)
+		total += item.LineTotal
+	}
+
+	resp.Bill.TotalAmount = total
+
+	query = `SELECT payment_method_id, method_name FROM payment_methods`
+
+	rows2, err := r.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows2.Close()
+
+	for rows2.Next() {
+		var pm models.CheckoutPaymentMethod
+		err := rows2.Scan(&pm.PaymentMethodID, &pm.MethodName)
+		if err != nil {
+			return nil, err
+		}
+		resp.PaymentMethods = append(resp.PaymentMethods, pm)
+	}
+
+	return &resp, nil
+}
