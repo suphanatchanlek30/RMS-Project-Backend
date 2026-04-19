@@ -149,4 +149,5 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 
 	v1.Get("/dashboard/summary", middleware.Protected(), middleware.AdminOnly(), dashboardHandler.GetSummary)
 	v1.Get("/reports/sales", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetSalesReport)
+	v1.Get("/reports/top-menus", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetTopMenusReport)
 }

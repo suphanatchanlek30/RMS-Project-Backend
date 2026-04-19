@@ -81,3 +81,61 @@ func (r *ReportRepository) GetSalesReport(ctx context.Context, dateFrom string, 
 
 	return items, nil
 }
+
+func (r *ReportRepository) GetTopMenusReport(ctx context.Context, dateFrom string, dateTo string, limit int) ([]models.TopMenuReportItem, error) {
+	fromDate, err := time.Parse("2006-01-02", dateFrom)
+	if err != nil {
+		return nil, fmt.Errorf("INVALID_DATE_FROM")
+	}
+
+	toDate, err := time.Parse("2006-01-02", dateTo)
+	if err != nil {
+		return nil, fmt.Errorf("INVALID_DATE_TO")
+	}
+
+	if fromDate.After(toDate) {
+		return nil, fmt.Errorf("INVALID_DATE_RANGE")
+	}
+
+	if limit <= 0 {
+		return nil, fmt.Errorf("INVALID_LIMIT")
+	}
+
+	query := `
+		SELECT
+			m.menu_id,
+			m.menu_name,
+			COALESCE(SUM(oi.quantity), 0) AS total_quantity,
+			COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS total_amount
+		FROM order_items oi
+		JOIN menus m ON oi.menu_id = m.menu_id
+		JOIN customer_orders co ON oi.order_id = co.order_id
+		WHERE DATE(co.order_time) >= $1
+		  AND DATE(co.order_time) <= $2
+		  AND oi.item_status <> 'CANCELLED'
+		GROUP BY m.menu_id, m.menu_name
+		ORDER BY total_quantity DESC
+		LIMIT $3
+	`
+
+	rows, err := r.DB.Query(ctx, query, fromDate, toDate, limit)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	defer rows.Close()
+
+	var items []models.TopMenuReportItem
+	for rows.Next() {
+		var item models.TopMenuReportItem
+		if err := rows.Scan(&item.MenuID, &item.MenuName, &item.TotalQuantity, &item.TotalAmount); err != nil {
+			return nil, fmt.Errorf("INTERNAL")
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+
+	return items, nil
+}

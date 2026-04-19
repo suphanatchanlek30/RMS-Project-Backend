@@ -268,7 +268,47 @@ Expected Response (200):
 - `dateFrom` > `dateTo` -> `400 query ไม่ถูกต้อง`
 - `groupBy` ไม่ใช่ `day` หรือ `month` -> `400 query ไม่ถูกต้อง`
 
-### 4️⃣.3️⃣ Roles (ADMIN เท่านั้น)
+### 4️⃣.3️⃣ Top Menus Report (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/reports/top-menus?dateFrom=2025-08-01&dateTo=2025-08-31&limit=5`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+**Query Parameters:**
+- `dateFrom` (required) - วันที่เริ่มต้น (YYYY-MM-DD)
+- `dateTo` (required) - วันที่สิ้นสุด (YYYY-MM-DD)
+- `limit` (required) - จำนวนเมนูที่ต้องการแสดง
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงรายงานเมนูขายดีสำเร็จ",
+  "data": [
+    {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalQuantity": 120,
+      "totalAmount": 10680.00
+    }
+  ]
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่ส่ง query parameters -> `400 กรุณาระบุ dateFrom, dateTo, และ limit`
+- `dateFrom` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateTo` มีรูปแบบไม่ถูกต้อง -> `400 query ไม่ถูกต้อง`
+- `dateFrom` > `dateTo` -> `400 query ไม่ถูกต้อง`
+- `limit` ไม่ใช่จำนวนเต็มบวก -> `400 query ไม่ถูกต้อง`
+
+### 4️⃣.4️⃣ Roles (ADMIN เท่านั้น)
 
 Method: `GET`  
 URL: `{{baseUrl}}/api/v1/roles`  

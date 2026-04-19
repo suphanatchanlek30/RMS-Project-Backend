@@ -13,3 +13,10 @@ type SalesReportRequest struct {
 	DateTo   string `query:"dateTo"`
 	GroupBy  string `query:"groupBy"`
 }
+
+type TopMenuReportItem struct {
+	MenuID        int     `json:"menuId"`
+	MenuName      string  `json:"menuName"`
+	TotalQuantity int     `json:"totalQuantity"`
+	TotalAmount   float64 `json:"totalAmount"`
+}

@@ -219,6 +219,7 @@ docker compose up --build -d
 - `GET /api/v1/roles`
 - `GET /api/v1/dashboard/summary`
 - `GET /api/v1/reports/sales`
+- `GET /api/v1/reports/top-menus`
 - `POST /api/v1/employees`
 - `GET /api/v1/employees`
 - `GET /api/v1/employees/:employeeId`
