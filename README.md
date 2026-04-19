@@ -217,6 +217,8 @@ docker compose up --build -d
 ### ADMIN เท่านั้น
 
 - `GET /api/v1/roles`
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/reports/sales`
 - `POST /api/v1/employees`
 - `GET /api/v1/employees`
 - `GET /api/v1/employees/:employeeId`
