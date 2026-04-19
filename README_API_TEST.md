@@ -664,6 +664,132 @@ Expected Response (200):
 }
 ```
 
+### 1️⃣8️⃣.1️⃣ Get Tables Overview (CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/tables/overview`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงภาพรวมโต๊ะสำเร็จ",
+  "data": [
+    {
+      "tableId": 1,
+      "tableNumber": "A01",
+      "tableStatus": "OCCUPIED",
+      "currentSession": {
+        "sessionId": 1,
+        "startTime": "2025-08-20T12:00:00Z"
+      }
+    },
+    {
+      "tableId": 2,
+      "tableNumber": "A02",
+      "tableStatus": "AVAILABLE",
+      "currentSession": null
+    }
+  ]
+}
+```
+
+### 1️⃣8️⃣.2️⃣ Get Checkout (CASHIER)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/cashier/sessions/1/checkout`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล checkout สำเร็จ",
+  "data": {
+    "sessionId": 1,
+    "tableId": 1,
+    "tableNumber": "A01",
+    "bill": {
+      "items": [
+        {
+          "orderItemId": 1,
+          "menuName": "ข้าวผัดกุ้ง",
+          "quantity": 2,
+          "unitPrice": 89.00,
+          "lineTotal": 178.00
+        }
+      ],
+      "totalAmount": 178.00
+    },
+    "paymentMethods": [
+      {
+        "paymentMethodId": 1,
+        "methodName": "CASH"
+      },
+      {
+        "paymentMethodId": 2,
+        "methodName": "QR_PAYMENT"
+      }
+    ]
+  }
+}
+```
+
+### 1️⃣8️⃣.3️⃣ Checkout (ชำระเงิน + ออกใบเสร็จ + ปิดโต๊ะ) (CASHIER)
+
+Method: `POST`  
+URL: `{{baseUrl}}/api/v1/cashier/checkout`  
+Headers:
+
+- `Authorization: Bearer {{cashierToken}}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "sessionId": 1,
+  "paymentMethodId": 1,
+  "receivedAmount": 200.00
+}
+```
+
+Expected Response (201):
+
+```json
+{
+  "success": true,
+  "message": "ชำระเงินและปิดโต๊ะสำเร็จ",
+  "data": {
+    "paymentId": 1,
+    "receiptId": 1,
+    "receiptNumber": "RCT-20250820-0001",
+    "sessionId": 1,
+    "sessionStatus": "CLOSED",
+    "tableId": 1,
+    "tableStatus": "AVAILABLE",
+    "changeAmount": 22.00
+  }
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- ไม่มี sessionId หรือ sessionId ไม่ถูกต้อง -> `404 ไม่พบ session`
+- session ถูกปิดแล้ว หรือ payment ทำแล้ว -> `409 session ไม่พร้อมสำหรับการชำระเงิน`
+- receivedAmount น้อยกว่ายอดรวม -> `422 จำนวนเงินที่รับไม่เพียงพอ`
+
 ### 1️⃣9️⃣ Close Table Session (CASHIER)
 
 Method: `PATCH`  
