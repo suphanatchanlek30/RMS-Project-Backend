@@ -65,6 +65,10 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	paymentMethodService := services.NewPaymentMethodService(paymentMethodRepo)
 	paymentMethodHandler := handlers.NewPaymentMethodHandler(paymentMethodService)
 
+	dashboardRepo := repositories.NewDashboardRepository(db)
+	dashboardService := services.NewDashboardService(dashboardRepo)
+	dashboardHandler := handlers.NewDashboardHandler(dashboardService)
+
 	app.Get("/health", healthHandler.Check)
 
 	api := app.Group("/api")
@@ -130,4 +134,6 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/payment-methods", middleware.Protected(), middleware.AdminOrCashier(), paymentMethodHandler.GetAll)
 	v1.Get("/payments/:paymentId/receipt", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByPaymentID)
 	v1.Get("/receipts/:receiptId", middleware.Protected(), middleware.AdminOrCashier(), receiptHandler.GetByReceiptID)
+
+	v1.Get("/dashboard/summary", middleware.Protected(), middleware.AdminOnly(), dashboardHandler.GetSummary)
 }

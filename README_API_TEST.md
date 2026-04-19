@@ -214,6 +214,40 @@ Expected Response (200):
 }
 ```
 
+### 4️⃣.1️⃣ Dashboard Summary (ADMIN)
+
+Method: `GET`  
+URL: `{{baseUrl}}/api/v1/dashboard/summary`  
+Headers:
+
+- `Authorization: Bearer {{adminToken}}`
+
+Body: None
+
+Expected Response (200):
+
+```json
+{
+  "success": true,
+  "message": "ดึงข้อมูล dashboard สำเร็จ",
+  "data": {
+    "todaySales": 12500.00,
+    "todayOrders": 85,
+    "occupiedTables": 7,
+    "availableTables": 13,
+    "topMenu": {
+      "menuId": 101,
+      "menuName": "ข้าวผัดกุ้ง",
+      "totalSold": 24
+    }
+  }
+}
+```
+
+กรณี error ที่ควรลองด้วย
+
+- หากหลังจากที่ไม่มีข้อมูลการขายระหว่างวัน -> `todaySales` = 0, `topMenu` = {menuId: 0, menuName: "", totalSold: 0}
+
 ### 5️⃣ Customer Menus (Public)
 
 Method: `GET`  
