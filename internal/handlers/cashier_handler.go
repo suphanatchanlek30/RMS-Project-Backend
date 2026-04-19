@@ -43,11 +43,26 @@ func (h *CashierHandler) GetCheckout(c *fiber.Ctx) error {
 
 	checkout, err := h.service.GetCheckout(c.UserContext(), sessionID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
-			Success: false,
-			Message: "ไม่พบข้อมูล checkout",
-			Data:    nil,
-		})
+		switch err.Error() {
+		case "NOT_FOUND":
+			return c.Status(fiber.StatusNotFound).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบข้อมูล checkout",
+				Data:    nil,
+			})
+		case "SESSION_NOT_READY":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ไม่พร้อมสำหรับการ checkout",
+				Data:    nil,
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
+				Data:    nil,
+			})
+		}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(models.APIResponse{
@@ -60,6 +75,14 @@ func (h *CashierHandler) GetCheckout(c *fiber.Ctx) error {
 func (h *CashierHandler) Checkout(c *fiber.Ctx) error {
 	var req models.CheckoutRequest
 	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+			Success: false,
+			Message: "ข้อมูลไม่ถูกต้อง",
+			Data:    nil,
+		})
+	}
+
+	if req.SessionID <= 0 || req.PaymentMethodID <= 0 || req.ReceivedAmount < 0 {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
 			Success: false,
 			Message: "ข้อมูลไม่ถูกต้อง",
@@ -86,6 +109,24 @@ func (h *CashierHandler) Checkout(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
 				Success: false,
 				Message: "จำนวนเงินที่รับไม่เพียงพอ",
+				Data:    nil,
+			})
+		case "NOT_FOUND_PAYMENT_METHOD":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "ไม่พบ payment method",
+				Data:    nil,
+			})
+		case "NOT_READY":
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(models.APIResponse{
+				Success: false,
+				Message: "session ไม่พร้อมคิดเงิน",
+				Data:    nil,
+			})
+		case "INTERNAL":
+			return c.Status(fiber.StatusInternalServerError).JSON(models.APIResponse{
+				Success: false,
+				Message: "เกิดข้อผิดพลาดภายในระบบ",
 				Data:    nil,
 			})
 		default:

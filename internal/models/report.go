@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type SalesReportItem struct {
 	Date        string  `json:"date"`
 	TotalSales  float64 `json:"totalSales"`

@@ -50,7 +50,16 @@ func (r *ReceiptRepository) CreateForPayment(ctx context.Context, paymentID int,
 		return fmt.Errorf("INTERNAL")
 	}
 
-	receiptNumber := fmt.Sprintf("RCT-%s-%04d", issueDate.Format("20060102"), receiptID)
+	prefix := fmt.Sprintf("RCT-%s-", issueDate.Format("20060102"))
+	var seq int
+	if err := tx.QueryRow(ctx, `
+		SELECT COUNT(*)::int + 1
+		FROM receipts
+		WHERE receipt_number LIKE $1
+	`, prefix+"%").Scan(&seq); err != nil {
+		return fmt.Errorf("INTERNAL")
+	}
+	receiptNumber := fmt.Sprintf("%s%04d", prefix, seq)
 	if _, err := tx.Exec(ctx, `UPDATE receipts SET receipt_number = $1 WHERE receipt_id = $2`, receiptNumber, receiptID); err != nil {
 		return fmt.Errorf("INTERNAL")
 	}

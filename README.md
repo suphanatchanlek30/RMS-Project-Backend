@@ -11,6 +11,7 @@
 - API จัดการโต๊ะ (ดูรายการ, ดูรายตัว, สร้าง, แก้ไข)
 - API เมนูสำหรับลูกค้า
 - API คำสั่งซื้อของลูกค้าผ่าน QR และคำสั่งซื้อของ cashier
+- API กลุ่ม Cashier (ภาพรวมโต๊ะ, checkout, ชำระเงินครบ flow), Dashboard สรุปหน้าแอดมิน, รายงานยอดขายและเมนูขายดี
 - SQL seed สำหรับสร้าง schema และข้อมูลตั้งต้น
 - รองรับการรันแบบ Docker ทั้งระบบ หรือรัน Go local + DB ใน Docker
 
@@ -35,50 +36,77 @@ internal/
     postgres.go
   handlers/
     auth_handler.go
+    cashier_handler.go
+    category_handler.go
+    dashboard_handler.go
     employee_handler.go
     health_handler.go
+    kitchen_handler.go
     menu_handler.go
+    order_handler.go
+    payment_handler.go
+    payment_method_handler.go
+    qr_session_handler.go
+    receipt_handler.go
+    report_handler.go
     role_handler.go
     table_handler.go
     table_session_handler.go
-    qr_session_handler.go
-    order_handler.go
-    category_handler.go
   middleware/
     auth_middleware.go
   models/
     auth.go
+    cashier.go
+    category.go
     common.go
+    dashboard.go
     employee.go
+    kitchen.go
     menu.go
+    order.go
+    payment.go
+    qr_session.go
+    receipt.go
+    report.go
     role.go
     table.go
     table_session.go
-    qr_session.go
-    order.go
-    category.go
   repositories/
     auth_repository.go
+    cashier_repository.go
+    category_repository.go
+    dashboard_repository.go
     employee_repository.go
+    kitchen_repository.go
     menu_repository.go
+    order_repository.go
+    payment_method_repository.go
+    payment_repository.go
+    qr_session_repository.go
+    receipt_repository.go
+    report_repository.go
     role_repository.go
     table_repository.go
     table_session_repository.go
-    qr_session_repository.go
-    order_repository.go
-    category_repository.go
   routes/
     routes.go
   services/
     auth_service.go
+    cashier_service.go
+    category_service.go
+    dashboard_service.go
     employee_service.go
+    kitchen_service.go
     menu_service.go
+    order_service.go
+    payment_method_service.go
+    payment_service.go
+    qr_session_service.go
+    receipt_service.go
+    report_service.go
     role_service.go
     table_service.go
     table_session_service.go
-    qr_session_service.go
-    order_service.go
-    category_service.go
   utils/
     jwt.go
     password.go

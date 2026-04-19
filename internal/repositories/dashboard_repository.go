@@ -76,6 +76,7 @@ func (r *DashboardRepository) GetSummary(ctx context.Context) (*models.Dashboard
 		JOIN menus m ON oi.menu_id = m.menu_id
 		JOIN customer_orders co ON oi.order_id = co.order_id
 		WHERE DATE(co.order_time) = CURRENT_DATE
+		  AND oi.item_status <> 'CANCELLED'
 		GROUP BY m.menu_id, m.menu_name
 		ORDER BY total_sold DESC
 		LIMIT 1

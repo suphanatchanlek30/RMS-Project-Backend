@@ -74,7 +74,7 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	reportHandler := handlers.NewReportHandler(reportService)
 
 	cashierRepo := repositories.NewCashierRepository(db)
-	cashierService := services.NewCashierService(cashierRepo)
+	cashierService := services.NewCashierService(cashierRepo, tableSessionRepo)
 	cashierHandler := handlers.NewCashierHandler(cashierService)
 
 	app.Get("/health", healthHandler.Check)
@@ -150,8 +150,4 @@ func SetupRoutes(app *fiber.App, db *pgxpool.Pool) {
 	v1.Get("/dashboard/summary", middleware.Protected(), middleware.AdminOnly(), dashboardHandler.GetSummary)
 	v1.Get("/reports/sales", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetSalesReport)
 	v1.Get("/reports/top-menus", middleware.Protected(), middleware.AdminOnly(), reportHandler.GetTopMenusReport)
-	v1.Get("/dashboard/summary", middleware.Protected(), middleware.AdminOnly(), dashboardHandler.GetSummary)
-	v1.Get("/cashier/tables/overview", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetTablesOverview)
-	v1.Get("/cashier/sessions/:sessionId/checkout", middleware.Protected(), middleware.CashierOnly(), cashierHandler.GetCheckout)
-	v1.Post("/cashier/checkout", middleware.Protected(), middleware.CashierOnly(), cashierHandler.Checkout)
 }

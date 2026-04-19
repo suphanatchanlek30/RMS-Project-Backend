@@ -7,9 +7,9 @@ type TopMenuInfo struct {
 }
 
 type DashboardSummaryData struct {
-	TodaySales     float64      `json:"todaySales"`
-	TodayOrders    int          `json:"todayOrders"`
-	OccupiedTables int          `json:"occupiedTables"`
+	TodaySales      float64     `json:"todaySales"`
+	TodayOrders     int         `json:"todayOrders"`
+	OccupiedTables  int         `json:"occupiedTables"`
 	AvailableTables int         `json:"availableTables"`
-	TopMenu        TopMenuInfo  `json:"topMenu"`
+	TopMenu         TopMenuInfo `json:"topMenu"`
 }

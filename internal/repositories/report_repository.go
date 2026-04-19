@@ -35,20 +35,28 @@ func (r *ReportRepository) GetSalesReport(ctx context.Context, dateFrom string, 
 	}
 
 	// Validate groupBy
-	if groupBy != "day" && groupBy != "month" {
+	if groupBy != "day" && groupBy != "month" && groupBy != "week" {
 		return nil, fmt.Errorf("INVALID_GROUP_BY")
 	}
 
-	var dateFormat string
-	if groupBy == "day" {
-		dateFormat = "YYYY-MM-DD"
-	} else {
-		dateFormat = "YYYY-MM"
+	var groupExpr, dateSelect string
+	switch groupBy {
+	case "day":
+		groupExpr = "DATE(p.payment_time)"
+		dateSelect = "TO_CHAR(DATE(p.payment_time), 'YYYY-MM-DD')"
+	case "month":
+		groupExpr = "DATE_TRUNC('month', p.payment_time)"
+		dateSelect = "TO_CHAR(DATE_TRUNC('month', p.payment_time), 'YYYY-MM')"
+	case "week":
+		groupExpr = "DATE_TRUNC('week', p.payment_time)"
+		dateSelect = "TO_CHAR(DATE_TRUNC('week', p.payment_time), 'YYYY-MM-DD')"
+	default:
+		return nil, fmt.Errorf("INVALID_GROUP_BY")
 	}
 
 	query := fmt.Sprintf(`
 		SELECT 
-			TO_CHAR(p.payment_time, '%s') as date,
+			%s as date,
 			COALESCE(SUM(p.total_amount), 0) as total_sales,
 			COALESCE(COUNT(DISTINCT co.order_id), 0) as total_orders
 		FROM payments p
@@ -56,9 +64,9 @@ func (r *ReportRepository) GetSalesReport(ctx context.Context, dateFrom string, 
 		WHERE p.payment_status = 'PAID'
 		  AND DATE(p.payment_time) >= $1
 		  AND DATE(p.payment_time) <= $2
-		GROUP BY TO_CHAR(p.payment_time, '%s')
-		ORDER BY date ASC
-	`, dateFormat, dateFormat)
+		GROUP BY %s
+		ORDER BY MIN(p.payment_time) ASC
+	`, dateSelect, groupExpr)
 
 	rows, err := r.DB.Query(ctx, query, fromDate, toDate)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/suphanatchanlek30/rms-project-backend/internal/models"
 )
@@ -26,9 +27,14 @@ func (r *CashierRepository) GetTablesOverview(ctx context.Context) ([]models.Cas
 			ts.session_id,
 			ts.start_time
 		FROM restaurant_tables rt
-		LEFT JOIN table_sessions ts
-			ON ts.table_id = rt.table_id
-			AND ts.session_status = 'OPEN'
+		LEFT JOIN LATERAL (
+			SELECT s.session_id, s.start_time
+			FROM table_sessions s
+			WHERE s.table_id = rt.table_id
+			  AND s.session_status = 'OPEN'
+			ORDER BY s.start_time DESC, s.session_id DESC
+			LIMIT 1
+		) ts ON TRUE
 		ORDER BY rt.table_number ASC
 	`
 
@@ -71,22 +77,35 @@ func (r *CashierRepository) GetTablesOverview(ctx context.Context) ([]models.Cas
 }
 
 func (r *CashierRepository) GetCheckout(ctx context.Context, sessionID int) (*models.CheckoutResponse, error) {
-	query := `SELECT ts.session_id, rt.table_id, rt.table_number
-	FROM table_sessions ts
-	JOIN restaurant_tables rt ON ts.table_id = rt.table_id
-	WHERE ts.session_id = $1`
+	query := `
+		SELECT ts.session_id, rt.table_id, rt.table_number, ts.session_status
+		FROM table_sessions ts
+		JOIN restaurant_tables rt ON ts.table_id = rt.table_id
+		WHERE ts.session_id = $1
+	`
 
 	var resp models.CheckoutResponse
-	err := r.DB.QueryRow(ctx, query, sessionID).Scan(&resp.SessionID, &resp.TableID, &resp.TableNumber)
+	var sessionStatus string
+	err := r.DB.QueryRow(ctx, query, sessionID).Scan(&resp.SessionID, &resp.TableID, &resp.TableNumber, &sessionStatus)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("NOT_FOUND")
+		}
 		return nil, err
 	}
+	if sessionStatus != "OPEN" {
+		return nil, fmt.Errorf("SESSION_NOT_READY")
+	}
 
-	query = `SELECT oi.order_item_id, m.menu_name, oi.quantity, oi.unit_price, (oi.quantity * oi.unit_price) as line_total
-	FROM order_items oi
-	JOIN menus m ON oi.menu_id = m.menu_id
-	JOIN customer_orders co ON oi.order_id = co.order_id
-	WHERE co.session_id = $1`
+	query = `
+		SELECT oi.order_item_id, m.menu_name, oi.quantity, oi.unit_price, (oi.quantity * oi.unit_price) AS line_total
+		FROM order_items oi
+		JOIN menus m ON oi.menu_id = m.menu_id
+		JOIN customer_orders co ON oi.order_id = co.order_id
+		WHERE co.session_id = $1
+		  AND oi.item_status <> 'CANCELLED'
+		ORDER BY oi.order_item_id ASC
+	`
 
 	rows, err := r.DB.Query(ctx, query, sessionID)
 	if err != nil {
@@ -107,7 +126,7 @@ func (r *CashierRepository) GetCheckout(ctx context.Context, sessionID int) (*mo
 
 	resp.Bill.TotalAmount = total
 
-	query = `SELECT payment_method_id, method_name FROM payment_methods`
+	query = `SELECT payment_method_id, method_name FROM payment_methods ORDER BY payment_method_id ASC`
 
 	rows2, err := r.DB.Query(ctx, query)
 	if err != nil {
@@ -193,27 +212,31 @@ func (r *CashierRepository) Checkout(ctx context.Context, req *models.CheckoutRe
 		LIMIT 1
 	`, req.SessionID).Scan(&orderID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("NOT_READY")
+		}
 		return nil, fmt.Errorf("INTERNAL")
 	}
 
-	// ได้ payment method name
-	var paymentMethodName string
+	// ตรวจสอบ payment method
+	var methodOK bool
 	err = tx.QueryRow(ctx, `
-		SELECT method_name
-		FROM payment_methods
-		WHERE payment_method_id = $1
-	`, req.PaymentMethodID).Scan(&paymentMethodName)
+		SELECT EXISTS(SELECT 1 FROM payment_methods WHERE payment_method_id = $1)
+	`, req.PaymentMethodID).Scan(&methodOK)
 	if err != nil {
-		return nil, fmt.Errorf("VALIDATION")
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	if !methodOK {
+		return nil, fmt.Errorf("NOT_FOUND_PAYMENT_METHOD")
 	}
 
 	// สร้าง payment
 	var paymentID int
 	err = tx.QueryRow(ctx, `
-		INSERT INTO payments (order_id, session_id, payment_method_id, total_amount, payment_status)
-		VALUES ($1, $2, $3, $4, 'PAID')
+		INSERT INTO payments (order_id, payment_method_id, total_amount, payment_status)
+		VALUES ($1, $2, $3, 'PAID')
 		RETURNING payment_id
-	`, orderID, req.SessionID, req.PaymentMethodID, totalAmount).Scan(&paymentID)
+	`, orderID, req.PaymentMethodID, totalAmount).Scan(&paymentID)
 	if err != nil {
 		return nil, fmt.Errorf("INTERNAL")
 	}
@@ -221,16 +244,27 @@ func (r *CashierRepository) Checkout(ctx context.Context, req *models.CheckoutRe
 	// สร้าง receipt
 	var receiptID int
 	var issueDate time.Time
+	tmpNumber := fmt.Sprintf("TMP-%d", paymentID)
 	err = tx.QueryRow(ctx, `
 		INSERT INTO receipts (payment_id, receipt_number, total_amount)
-		VALUES ($1, 'TMP', $2)
+		VALUES ($1, $2, $3)
 		RETURNING receipt_id, issue_date
-	`, paymentID, totalAmount).Scan(&receiptID, &issueDate)
+	`, paymentID, tmpNumber, totalAmount).Scan(&receiptID, &issueDate)
 	if err != nil {
 		return nil, fmt.Errorf("INTERNAL")
 	}
 
-	receiptNumber := fmt.Sprintf("RCT-%s-%04d", issueDate.Format("20060102"), receiptID)
+	prefix := fmt.Sprintf("RCT-%s-", issueDate.Format("20060102"))
+	var seq int
+	err = tx.QueryRow(ctx, `
+		SELECT COUNT(*)::int + 1
+		FROM receipts
+		WHERE receipt_number LIKE $1
+	`, prefix+"%").Scan(&seq)
+	if err != nil {
+		return nil, fmt.Errorf("INTERNAL")
+	}
+	receiptNumber := fmt.Sprintf("%s%04d", prefix, seq)
 	_, err = tx.Exec(ctx, `
 		UPDATE receipts SET receipt_number = $1 WHERE receipt_id = $2
 	`, receiptNumber, receiptID)
