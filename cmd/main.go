@@ -37,7 +37,12 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(fiberLogger.New())
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.GetEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://localhost:5173"),
+		AllowMethods:     config.GetEnv("CORS_ALLOW_METHODS", "GET,POST,PUT,PATCH,DELETE,OPTIONS"),
+		AllowHeaders:     config.GetEnv("CORS_ALLOW_HEADERS", "Origin,Content-Type,Accept,Authorization"),
+		AllowCredentials: config.GetEnv("CORS_ALLOW_CREDENTIALS", "false") == "true",
+	}))
 
 	routes.SetupRoutes(app, dbPool)
 
